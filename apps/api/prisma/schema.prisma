@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH ────────────────────────────────────────────────────
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  profile         UserProfile?
+  preferences     UserPreferences?
+  nutritionPlans  NutritionPlan[]
+  inventoryItems  InventoryItem[]
+  progressLogs    ProgressLog[]
+  savedRecipes    Recipe[]
+
+  @@map("users")
+}
+
+// ─── PROFILE & PREFERENCES ───────────────────────────────────
+
+model UserProfile {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName          String
+  lastName           String?
+  birthDate          DateTime
+  sex                Sex
+  heightCm           Float
+  weightKg           Float
+  activityLevel      ActivityLevel
+  goal               NutritionGoal
+  onboardingComplete Boolean       @default(false)
+  updatedAt          DateTime      @updatedAt
+
+  @@map("user_profiles")
+}
+
+model UserPreferences {
+  id                String      @id @default(cuid())
+  userId            String      @unique
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dietaryType       DietaryType @default(OMNIVORE)
+  allergies         String[]
+  dislikedFoods     String[]
+  preferredCuisines String[]
+  mealsPerDay       Int         @default(4)
+  updatedAt         DateTime    @updatedAt
+
+  @@map("user_preferences")
+}
+
+// ─── NUTRITION ENGINE ────────────────────────────────────────
+
+model NutritionPlan {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart      DateTime
+  targetCalories Float
+  targetProteinG Float
+  targetCarbsG   Float
+  targetFatG     Float
+  generatedAt    DateTime     @default(now())
+  weeklyMenus    WeeklyMenu[]
+  isActive       Boolean      @default(true)
+
+  @@map("nutrition_plans")
+}
+
+model WeeklyMenu {
+  id              String        @id @default(cuid())
+  nutritionPlanId String
+  nutritionPlan   NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int
+  dayName         String
+  totalCalories   Float
+  totalProteinG   Float
+  totalCarbsG     Float
+  totalFatG       Float
+  meals           Meal[]
+
+  @@unique([nutritionPlanId, dayOfWeek])
+  @@map("weekly_menus")
+}
+
+model Meal {
+  id               String     @id @default(cuid())
+  weeklyMenuId     String
+  weeklyMenu       WeeklyMenu @relation(fields: [weeklyMenuId], references: [id], onDelete: Cascade)
+  mealType         MealType
+  name             String
+  description      String
+  prepTimeMins     Int
+  cookTimeMins     Int
+  calories         Float
+  proteinG         Float
+  carbsG           Float
+  fatG             Float
+  ingredients      Json
+  preparationSteps Json
+
+  @@map("meals")
+}
+
+// ─── FOOD DATABASE ───────────────────────────────────────────
+
+model Food {
+  id             String          @id @default(cuid())
+  fdcId          String?         @unique
+  barcode        String?         @unique
+  name           String
+  nameEs         String
+  category       String
+  source         String          @default("USDA")
+  calories       Float
+  proteinG       Float
+  carbsG         Float
+  fatG           Float
+  fiberG         Float?
+  sodiumMg       Float?
+  servingSizeG   Float           @default(100)
+  inventoryItems InventoryItem[]
+
+  @@index([nameEs])
+  @@index([name])
+  @@map("foods")
+}
+
+// ─── INVENTORY ───────────────────────────────────────────────
+
+model InventoryItem {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodId     String?
+  food       Food?     @relation(fields: [foodId], references: [id])
+  customName String?
+  quantity   Float
+  unit       String
+  expiryDate DateTime?
+  addedAt    DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("inventory_items")
+}
+
+// ─── RECIPES ─────────────────────────────────────────────────
+
+model Recipe {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  description  String
+  ingredients  Json
+  steps        Json
+  prepTimeMins Int
+  cookTimeMins Int
+  servings     Int
+  calories     Float
+  proteinG     Float
+  carbsG       Float
+  fatG         Float
+  tags         String[]
+  generatedAt  DateTime @default(now())
+  isSaved      Boolean  @default(false)
+
+  @@map("recipes")
+}
+
+// ─── PROGRESS ────────────────────────────────────────────────
+
+model ProgressLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  weightKg    Float
+  bodyFatPct  Float?
+  notes       String?
+
+  @@unique([userId, date])
+  @@map("progress_logs")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  EXTRA_ACTIVE
+}
+
+enum NutritionGoal {
+  LOSE_WEIGHT
+  MAINTAIN_WEIGHT
+  GAIN_MUSCLE
+}
+
+enum DietaryType {
+  OMNIVORE
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+  KETO
+  PALEO
+}
+
+enum MealType {
+  BREAKFAST
+  MORNING_SNACK
+  LUNCH
+  AFTERNOON_SNACK
+  DINNER
+}

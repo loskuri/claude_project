@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "NutriPlan",
+    "slug": "nutriplan",
+    "version": "1.0.0",
+    "scheme": "nutriplan",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#16a34a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nutriplan.app"
+    },
+    "android": {
+      "package": "com.nutriplan.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#16a34a"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "NutriPlan necesita acceso a la cámara para escanear códigos de barras."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
