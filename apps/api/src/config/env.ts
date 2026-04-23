@@ -7,7 +7,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
-  ANTHROPIC_API_KEY: z.string().min(1),
+  ANTHROPIC_API_KEY: z.string().default(''),
   USDA_API_KEY: z.string().default('DEMO_KEY'),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
