@@ -42,4 +42,13 @@ router.delete('/:planId', async (req, res, next) => {
   }
 });
 
+router.get('/targets/adjusted', async (req, res, next) => {
+  try {
+    const targets = await dietService.getAdjustedTargets(req.user!.id);
+    res.json(targets);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

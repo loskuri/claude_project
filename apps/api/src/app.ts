@@ -11,6 +11,7 @@ import foodsRoutes from './modules/foods/foods.routes.js';
 import inventoryRoutes from './modules/inventory/inventory.routes.js';
 import recipesRoutes from './modules/recipes/recipes.routes.js';
 import progressRoutes from './modules/progress/progress.routes.js';
+import mealLogsRoutes from './modules/meal-logs/meal-logs.routes.js';
 
 export function createApp() {
   const app = express();
@@ -49,6 +50,7 @@ export function createApp() {
   api.use('/inventory', inventoryRoutes);
   api.use('/recipes', recipesRoutes);
   api.use('/progress', progressRoutes);
+  api.use('/meal-logs', mealLogsRoutes);
 
   app.use('/api/v1', api);
 

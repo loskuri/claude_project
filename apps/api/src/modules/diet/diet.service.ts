@@ -192,6 +192,60 @@ export async function deletePlan(userId: string, planId: string) {
   await deleteCachePattern(`diet:plan:${userId}:*`);
 }
 
+export async function getAdjustedTargets(userId: string) {
+  const targets = await getNutritionTargets(userId);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Solo miramos los últimos 2 días para evitar ajustes extremos
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(today.getDate() - 2);
+
+  const logs = await prisma.mealLog.findMany({
+    where: { userId, date: { gte: twoDaysAgo, lt: today } },
+  });
+
+  if (logs.length === 0) return { ...targets, adjusted: false, message: null };
+
+  const byDate = new Map<string, { calories: number; proteinG: number; carbsG: number; fatG: number }>();
+  for (const log of logs) {
+    const key = log.date.toISOString().split('T')[0];
+    const existing = byDate.get(key) ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+    byDate.set(key, {
+      calories: existing.calories + log.calories,
+      proteinG: existing.proteinG + log.proteinG,
+      carbsG: existing.carbsG + log.carbsG,
+      fatG: existing.fatG + log.fatG,
+    });
+  }
+
+  const days = Array.from(byDate.values());
+  const avgCalDelta = days.reduce((s, d) => s + (d.calories - targets.calories), 0) / days.length;
+
+  // Ajuste máximo: 10% del objetivo diario. Nunca bajar de 1200 kcal (mínimo seguro).
+  const MAX_ADJUST_PCT = 0.10;
+  const maxAdj = targets.calories * MAX_ADJUST_PCT;
+  const calComp = Math.max(-maxAdj, Math.min(maxAdj, -avgCalDelta));
+  const newCalories = Math.max(1200, Math.round(targets.calories + calComp));
+  const adjusted = Math.abs(avgCalDelta) > 100;
+
+  if (!adjusted) return { ...targets, adjusted: false, message: null };
+
+  // Redistribuir macros proporcionalmente al nuevo total de calorías
+  const ratio = newCalories / targets.calories;
+  return {
+    ...targets,
+    calories: newCalories,
+    proteinG: Math.round(targets.proteinG * ratio),
+    carbsG: Math.round(targets.carbsG * ratio),
+    fatG: Math.round(targets.fatG * ratio),
+    adjusted: true,
+    message: avgCalDelta > 0
+      ? `Comiste ${Math.round(avgCalDelta)} kcal extra en promedio los últimos ${days.length} días. Ajustando objetivo de hoy (-${Math.round(-calComp)} kcal).`
+      : `Comiste ${Math.round(-avgCalDelta)} kcal menos en promedio los últimos ${days.length} días. Ajustando objetivo de hoy (+${Math.round(calComp)} kcal).`,
+  };
+}
+
 type PrismaWeeklyMenu = {
   id: string;
   nutritionPlanId: string;

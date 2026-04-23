@@ -4,29 +4,29 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
 
-interface WeightLog {
-  id: string;
-  date: string;
-  weightKg: number;
-}
+interface WeightLog { id: string; date: string; weightKg: number; notes?: string; }
+interface MacroDay { date: string; calories: number; proteinG: number; carbsG: number; fatG: number; }
+
+type ActiveTab = 'weight' | 'macros';
 
 export default function ProgressPage() {
   const qc = useQueryClient();
   const [weight, setWeight] = useState('');
   const [notes, setNotes] = useState('');
+  const [tab, setTab] = useState<ActiveTab>('weight');
 
-  const { data, isLoading } = useQuery<{ logs: WeightLog[] }>({
+  const { data: weightData, isLoading: loadingWeight } = useQuery<{ logs: WeightLog[] }>({
     queryKey: ['progress-weight'],
     queryFn: () => apiFetch('/progress/weight'),
+  });
+
+  const { data: macroData, isLoading: loadingMacros } = useQuery<{ history: MacroDay[] }>({
+    queryKey: ['meal-logs-history'],
+    queryFn: () => apiFetch('/meal-logs/history'),
   });
 
   const addMutation = useMutation({
@@ -34,10 +34,20 @@ export default function ProgressPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress-weight'] }); setWeight(''); setNotes(''); },
   });
 
-  const logs = data?.logs ?? [];
-  const chartData = logs.map((l) => ({
+  const logs = weightData?.logs ?? [];
+  const macroHistory = macroData?.history ?? [];
+
+  const weightChartData = logs.map((l) => ({
     date: new Date(l.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
     peso: l.weightKg,
+  }));
+
+  const macroChartData = macroHistory.map((d) => ({
+    date: new Date(d.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
+    Proteína: Math.round(d.proteinG),
+    Carbos: Math.round(d.carbsG),
+    Grasas: Math.round(d.fatG),
+    kcal: Math.round(d.calories),
   }));
 
   const latest = logs[logs.length - 1];
@@ -51,14 +61,14 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="font-semibold text-gray-900 mb-4">Registrar peso</h2>
-          <form onSubmit={(e) => { e.preventDefault(); addMutation.mutate({ weightKg: Number(weight), notes }); }} className="space-y-3">
+          <form
+            onSubmit={(e) => { e.preventDefault(); addMutation.mutate({ weightKg: Number(weight), notes }); }}
+            className="space-y-3"
+          >
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Peso (kg)</label>
               <input
-                type="number"
-                step="0.1"
-                required
-                value={weight}
+                type="number" step="0.1" required value={weight}
                 onChange={(e) => setWeight(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl"
                 placeholder="70.5"
@@ -66,9 +76,11 @@ export default function ProgressPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Notas (opcional)</label>
-              <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl" placeholder="¿Cómo te sentís?" />
+              <input value={notes} onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl" placeholder="¿Cómo te sentís?" />
             </div>
-            <button type="submit" disabled={addMutation.isPending} className="w-full py-3 bg-brand-600 text-white font-semibold rounded-xl disabled:opacity-60">
+            <button type="submit" disabled={addMutation.isPending}
+              className="w-full py-3 bg-brand-600 text-white font-semibold rounded-xl disabled:opacity-60">
               {addMutation.isPending ? 'Guardando...' : 'Registrar'}
             </button>
           </form>
@@ -87,23 +99,59 @@ export default function ProgressPage() {
         </div>
 
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Evolución del peso</h2>
-          {isLoading ? (
-            <div className="animate-pulse h-48 bg-gray-100 rounded-xl" />
-          ) : chartData.length > 1 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
-                <Tooltip formatter={(v: number) => [`${v} kg`, 'Peso']} />
-                <Line type="monotone" dataKey="peso" stroke="#16a34a" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-              Registrá al menos 2 pesos para ver la gráfica
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">
+              {tab === 'weight' ? 'Evolución del peso' : 'Macros por día (últimos 30 días)'}
+            </h2>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              {(['weight', 'macros'] as const).map((t) => (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${tab === t ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500'}`}>
+                  {t === 'weight' ? 'Peso' : 'Macros'}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {tab === 'weight' ? (
+            loadingWeight ? (
+              <div className="animate-pulse h-48 bg-gray-100 rounded-xl" />
+            ) : weightChartData.length > 1 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={weightChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
+                  <Tooltip formatter={(v: number) => [`${v} kg`, 'Peso']} />
+                  <Line type="monotone" dataKey="peso" stroke="#16a34a" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+                Registrá al menos 2 pesos para ver la gráfica
+              </div>
+            )
+          ) : (
+            loadingMacros ? (
+              <div className="animate-pulse h-48 bg-gray-100 rounded-xl" />
+            ) : macroChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={macroChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Proteína" stackId="a" fill="#16a34a" />
+                  <Bar dataKey="Carbos" stackId="a" fill="#3b82f6" />
+                  <Bar dataKey="Grasas" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+                Registrá comidas para ver tus macros diarios
+              </div>
+            )
           )}
         </div>
       </div>
@@ -111,12 +159,14 @@ export default function ProgressPage() {
       {logs.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Historial</h2>
+            <h2 className="font-semibold text-gray-900">Historial de peso</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {[...logs].reverse().map((log) => (
               <div key={log.id} className="px-6 py-3 flex items-center justify-between">
-                <span className="text-sm text-gray-500">{new Date(log.date).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                <span className="text-sm text-gray-500">
+                  {new Date(log.date).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
                 <span className="font-semibold text-gray-900">{log.weightKg} kg</span>
               </div>
             ))}

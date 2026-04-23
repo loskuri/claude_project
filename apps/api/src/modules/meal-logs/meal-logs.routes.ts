@@ -1,0 +1,47 @@
+import { Router } from 'express';
+import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { validateBody } from '../../middleware/validate.middleware.js';
+import * as mealLogsService from './meal-logs.service.js';
+
+const router = Router();
+router.use(authMiddleware);
+
+router.post('/', validateBody(mealLogsService.logMealSchema), async (req, res, next) => {
+  try {
+    const log = await mealLogsService.logMeal(req.user!.id, req.body);
+    res.status(201).json(log);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/', async (req, res, next) => {
+  try {
+    const { date } = req.query as { date?: string };
+    const summary = await mealLogsService.getDailySummary(req.user!.id, date);
+    res.json(summary);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/history', async (req, res, next) => {
+  try {
+    const { from, to } = req.query as { from?: string; to?: string };
+    const history = await mealLogsService.getMacroHistory(req.user!.id, from, to);
+    res.json({ history });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    await mealLogsService.deleteMealLog(req.user!.id, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;

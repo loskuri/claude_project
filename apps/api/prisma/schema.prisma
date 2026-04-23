@@ -21,6 +21,7 @@ model User {
   inventoryItems  InventoryItem[]
   progressLogs    ProgressLog[]
   savedRecipes    Recipe[]
+  mealLogs        MealLog[]
 
   @@map("users")
 }
@@ -176,6 +177,28 @@ model Recipe {
   isSaved      Boolean  @default(false)
 
   @@map("recipes")
+}
+
+// ─── MEAL LOGS ───────────────────────────────────────────────
+
+model MealLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime
+  mealType   MealType
+  name       String
+  calories   Float
+  proteinG   Float
+  carbsG     Float
+  fatG       Float
+  quantity   Float    @default(1)
+  unit       String   @default("porcion")
+  notes      String?
+  loggedAt   DateTime @default(now())
+
+  @@index([userId, date])
+  @@map("meal_logs")
 }
 
 // ─── PROGRESS ────────────────────────────────────────────────
