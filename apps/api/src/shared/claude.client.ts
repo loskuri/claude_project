@@ -4,6 +4,9 @@ import { env } from '../config/env.js';
 let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
+  if (!env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY no configurada. Agregála en apps/api/.env');
+  }
   if (!_client) {
     _client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   }

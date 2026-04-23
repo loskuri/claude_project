@@ -23,6 +23,47 @@ interface AdjustedTargets {
   adjusted: boolean; message: string | null;
 }
 
+interface LogModalProps {
+  meal: Meal;
+  onConfirm: (meal: Meal, portions: number, notes: string) => void;
+  onClose: () => void;
+}
+
+function LogModal({ meal, onConfirm, onClose }: LogModalProps) {
+  const [portions, setPortions] = useState(1);
+  const [notes, setNotes] = useState('');
+  const scaled = (v: number) => Math.round(v * portions);
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <h3 className="font-semibold text-gray-900 mb-1">Registrar comida</h3>
+        <p className="text-sm text-gray-500 mb-4">{meal.name}</p>
+        <label className="text-sm font-medium text-gray-700 block mb-2">Porciones</label>
+        <div className="flex gap-2 mb-4">
+          {[0.5, 1, 1.5, 2].map((n) => (
+            <button key={n} onClick={() => setPortions(n)}
+              className={`flex-1 py-2 rounded-xl border-2 text-sm font-semibold transition ${portions === n ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-600'}`}>
+              {n}x
+            </button>
+          ))}
+        </div>
+        <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 mb-4">
+          {scaled(meal.calories)} kcal · P:{scaled(meal.proteinG)}g · C:{scaled(meal.carbsG)}g · G:{scaled(meal.fatG)}g
+        </div>
+        <input
+          type="text" placeholder="Nota opcional..." value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm mb-4"
+        />
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700">Cancelar</button>
+          <button onClick={() => onConfirm(meal, portions, notes)} className="flex-1 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold">Registrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MealCard({ meal, onLog }: { meal: Meal; onLog: (meal: Meal) => void }) {
   const [open, setOpen] = useState(false);
   return (
@@ -84,6 +125,7 @@ export default function MenuPage() {
   const qc = useQueryClient();
   const [selectedDay, setSelectedDay] = useState(0);
   const [logSuccess, setLogSuccess] = useState<string | null>(null);
+  const [logModal, setLogModal] = useState<Meal | null>(null);
 
   const { data: plan, isLoading, error } = useQuery<NutritionPlan>({
     queryKey: ['diet-current'],
@@ -108,21 +150,24 @@ export default function MenuPage() {
   });
 
   const logMealMutation = useMutation({
-    mutationFn: (meal: Meal) =>
+    mutationFn: ({ meal, portions, notes }: { meal: Meal; portions: number; notes: string }) =>
       apiFetch('/meal-logs', {
         method: 'POST',
         body: JSON.stringify({
           mealType: meal.mealType,
           name: meal.name,
-          calories: meal.calories,
-          proteinG: meal.proteinG,
-          carbsG: meal.carbsG,
-          fatG: meal.fatG,
+          calories: Math.round(meal.calories * portions),
+          proteinG: Math.round(meal.proteinG * portions),
+          carbsG: Math.round(meal.carbsG * portions),
+          fatG: Math.round(meal.fatG * portions),
+          quantity: portions,
+          notes: notes || undefined,
         }),
       }),
-    onSuccess: (_, meal) => {
+    onSuccess: (_, { meal }) => {
       qc.invalidateQueries({ queryKey: ['meal-logs-today'] });
       qc.invalidateQueries({ queryKey: ['meal-logs-history'] });
+      setLogModal(null);
       setLogSuccess(meal.name);
       setTimeout(() => setLogSuccess(null), 3000);
     },
@@ -134,6 +179,14 @@ export default function MenuPage() {
 
   return (
     <div className="p-8">
+      {logModal && (
+        <LogModal
+          meal={logModal}
+          onClose={() => setLogModal(null)}
+          onConfirm={(meal, portions, notes) => logMealMutation.mutate({ meal, portions, notes })}
+        />
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Mi menú semanal</h1>
         <button
@@ -144,6 +197,12 @@ export default function MenuPage() {
           {generateMutation.isPending ? 'Generando con IA...' : '✨ Generar plan'}
         </button>
       </div>
+
+      {generateMutation.isError && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+          Error al generar el plan: {(generateMutation.error as Error).message}
+        </div>
+      )}
 
       {adjustedTargets?.adjusted && adjustedTargets.message && (
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-700 text-sm">
@@ -220,7 +279,7 @@ export default function MenuPage() {
               </div>
               <div className="space-y-3">
                 {dayMenu.meals.map((meal) => (
-                  <MealCard key={meal.id} meal={meal} onLog={(m) => logMealMutation.mutate(m)} />
+                  <MealCard key={meal.id} meal={meal} onLog={(m) => setLogModal(m)} />
                 ))}
               </div>
             </div>
