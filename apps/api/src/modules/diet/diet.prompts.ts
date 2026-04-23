@@ -14,7 +14,7 @@ function getMealTypes(mealsPerDay: number): string[] {
     3: ['BREAKFAST', 'LUNCH', 'DINNER'],
     4: ['BREAKFAST', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER'],
     5: ['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER'],
-    6: ['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER', 'DINNER'],
+    6: ['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'AFTERNOON_SNACK', 'DINNER'],
   };
   return options[mealsPerDay] ?? options[4];
 }

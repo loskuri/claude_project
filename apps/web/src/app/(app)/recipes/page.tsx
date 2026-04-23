@@ -32,6 +32,11 @@ export default function RecipesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-recipes'] }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/recipes/saved/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-recipes'] }),
+  });
+
   function toggleItem(id: string) {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -161,7 +166,17 @@ export default function RecipesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {savedRecipes.map((recipe) => (
               <div key={recipe.id} className="bg-white rounded-2xl shadow-sm p-5">
-                <h3 className="font-semibold text-gray-900 mb-1">{recipe.name}</h3>
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-semibold text-gray-900">{recipe.name}</h3>
+                  <button
+                    onClick={() => deleteMutation.mutate(recipe.id)}
+                    disabled={deleteMutation.isPending}
+                    className="text-gray-300 hover:text-red-500 transition ml-2 text-lg leading-none"
+                    title="Eliminar receta"
+                  >
+                    ✕
+                  </button>
+                </div>
                 <p className="text-sm text-gray-500 mb-3">{recipe.description}</p>
                 <div className="flex gap-2 text-xs text-gray-500">
                   <span>{recipe.calories} kcal</span>

@@ -24,6 +24,15 @@ router.get('/current', async (req, res, next) => {
   }
 });
 
+router.get('/targets/adjusted', async (req, res, next) => {
+  try {
+    const targets = await dietService.getAdjustedTargets(req.user!.id);
+    res.json(targets);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:planId', async (req, res, next) => {
   try {
     const plan = await dietService.getPlanById(req.user!.id, req.params.planId);
@@ -37,15 +46,6 @@ router.delete('/:planId', async (req, res, next) => {
   try {
     await dietService.deletePlan(req.user!.id, req.params.planId);
     res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get('/targets/adjusted', async (req, res, next) => {
-  try {
-    const targets = await dietService.getAdjustedTargets(req.user!.id);
-    res.json(targets);
   } catch (err) {
     next(err);
   }

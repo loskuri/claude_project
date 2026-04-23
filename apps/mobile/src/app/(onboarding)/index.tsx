@@ -18,7 +18,7 @@ export default function OnboardingScreen() {
   const [profile, setProfile] = useState({
     firstName: user?.firstName ?? '',
     sex: 'MALE' as Sex,
-    birthDate: '1990-01-01',
+    birthDate: '',
     heightCm: 170,
     weightKg: 70,
     activityLevel: 'MODERATELY_ACTIVE' as ActivityLevel,
@@ -33,6 +33,10 @@ export default function OnboardingScreen() {
   }
 
   async function finish() {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate)) {
+      Alert.alert('Fecha inválida', 'Ingresá tu fecha de nacimiento en formato AAAA-MM-DD');
+      return;
+    }
     setLoading(true);
     try {
       await apiFetch('/users/me/profile', {
@@ -81,6 +85,16 @@ export default function OnboardingScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
+              </View>
+              <View className="mt-3">
+                <Text className="text-sm font-medium text-gray-700 mb-1">Fecha de nacimiento</Text>
+                <TextInput
+                  placeholder="AAAA-MM-DD"
+                  value={profile.birthDate}
+                  onChangeText={(v) => setProfile(p => ({ ...p, birthDate: v }))}
+                  className="border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
+                  maxLength={10}
+                />
               </View>
               {[
                 { label: 'Altura (cm)', field: 'heightCm' as const, keyboard: 'numeric' as const },

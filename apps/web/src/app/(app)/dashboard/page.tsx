@@ -6,12 +6,12 @@ import type { NutritionTargets, NutritionPlan } from '@nutriplan/shared';
 import { DAY_NAMES_ES } from '@nutriplan/shared';
 
 function MacroBar({ label, current, total, color }: { label: string; current: number; total: number; color: string }) {
-  const pct = Math.min(100, Math.round((current / total) * 100));
+  const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
         <span className="font-medium text-gray-700">{label}</span>
-        <span className="text-gray-500">{current}/{total}g</span>
+        <span className="text-gray-500">{Math.round(current)}/{total}g</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -20,7 +20,15 @@ function MacroBar({ label, current, total, color }: { label: string; current: nu
   );
 }
 
+interface DailySummary {
+  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+}
+
 export default function DashboardPage() {
+  const today = new Date().toISOString().split('T')[0];
+  const dayOfWeek = new Date().getDay();
+  const todayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
   const { data: targets, isLoading: loadingTargets } = useQuery<NutritionTargets>({
     queryKey: ['nutrition-targets'],
     queryFn: () => apiFetch('/nutrition/targets'),
@@ -32,9 +40,13 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const today = new Date().getDay();
-  const todayIndex = today === 0 ? 6 : today - 1;
+  const { data: dailySummary } = useQuery<DailySummary>({
+    queryKey: ['meal-logs-today', today],
+    queryFn: () => apiFetch(`/meal-logs?date=${today}`),
+  });
+
   const todayMenu = plan?.weeklyMenus?.find((m) => m.dayOfWeek === todayIndex);
+  const consumed = dailySummary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
   return (
     <div className="p-8">
@@ -65,10 +77,12 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              <MacroBar label="Proteínas" current={0} total={targets.proteinG} color="bg-brand-500" />
-              <MacroBar label="Carbohidratos" current={0} total={targets.carbsG} color="bg-blue-500" />
-              <MacroBar label="Grasas" current={0} total={targets.fatG} color="bg-yellow-500" />
-              <p className="text-xs text-gray-400">TMB: {targets.bmr} kcal · TDEE: {targets.tdee} kcal</p>
+              <MacroBar label="Proteínas" current={consumed.proteinG} total={targets.proteinG} color="bg-brand-500" />
+              <MacroBar label="Carbohidratos" current={consumed.carbsG} total={targets.carbsG} color="bg-blue-500" />
+              <MacroBar label="Grasas" current={consumed.fatG} total={targets.fatG} color="bg-yellow-500" />
+              <p className="text-xs text-gray-400">
+                {Math.round(consumed.calories)} / {targets.calories} kcal consumidas · TMB: {targets.bmr} · TDEE: {targets.tdee}
+              </p>
             </div>
           ) : (
             <p className="text-gray-500">Completá tu perfil para ver los objetivos</p>

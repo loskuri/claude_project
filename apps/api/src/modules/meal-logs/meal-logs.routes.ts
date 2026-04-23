@@ -18,6 +18,10 @@ router.post('/', validateBody(mealLogsService.logMealSchema), async (req, res, n
 router.get('/', async (req, res, next) => {
   try {
     const { date } = req.query as { date?: string };
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({ error: 'El parámetro date debe tener formato YYYY-MM-DD' });
+      return;
+    }
     const summary = await mealLogsService.getDailySummary(req.user!.id, date);
     res.json(summary);
   } catch (err) {

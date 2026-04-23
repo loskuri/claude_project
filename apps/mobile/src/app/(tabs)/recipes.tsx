@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, API_URL } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
-import type { InventoryItem } from '@nutriplan/shared';
+import type { InventoryItem, Recipe } from '@nutriplan/shared';
 
 export default function RecipesScreen() {
   const qc = useQueryClient();
@@ -19,9 +19,19 @@ export default function RecipesScreen() {
     queryFn: () => apiFetch('/inventory'),
   });
 
+  const { data: savedData } = useQuery<{ recipes: Recipe[] }>({
+    queryKey: ['saved-recipes'],
+    queryFn: () => apiFetch('/recipes/saved'),
+  });
+
   const saveMutation = useMutation({
     mutationFn: (id: string) => apiFetch(`/recipes/${id}/save`, { method: 'POST' }),
     onSuccess: () => { Alert.alert('Guardada', 'Receta guardada correctamente'); qc.invalidateQueries({ queryKey: ['saved-recipes'] }); },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/recipes/saved/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-recipes'] }),
   });
 
   function toggleItem(id: string) {
@@ -63,6 +73,7 @@ export default function RecipesScreen() {
   }
 
   const inventory = inventoryData?.items ?? [];
+  const savedRecipes = savedData?.recipes ?? [];
 
   return (
     <ScrollView className="flex-1 bg-gray-50">
@@ -119,6 +130,29 @@ export default function RecipesScreen() {
                 <Text className="text-brand-600 font-semibold">{saveMutation.isPending ? 'Guardando...' : 'Guardar receta'}</Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {savedRecipes.length > 0 && (
+          <View className="bg-white rounded-2xl p-5 shadow-sm">
+            <Text className="font-semibold text-gray-900 mb-3">Recetas guardadas</Text>
+            {savedRecipes.map((recipe) => (
+              <View key={recipe.id} className="py-3 border-b border-gray-100 last:border-0 flex-row justify-between items-start">
+                <View className="flex-1 mr-3">
+                  <Text className="font-medium text-gray-800 mb-0.5">{recipe.name}</Text>
+                  <Text className="text-xs text-gray-500">{recipe.calories} kcal · P:{recipe.proteinG}g · C:{recipe.carbsG}g · G:{recipe.fatG}g</Text>
+                  <Text className="text-xs text-gray-400">{recipe.prepTimeMins + recipe.cookTimeMins} min</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Eliminar', `¿Eliminar "${recipe.name}"?`, [
+                    { text: 'Cancelar' },
+                    { text: 'Eliminar', style: 'destructive', onPress: () => deleteMutation.mutate(recipe.id) },
+                  ])}
+                >
+                  <Text className="text-gray-300 text-lg">✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         )}
       </View>

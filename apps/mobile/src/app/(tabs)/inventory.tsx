@@ -123,8 +123,15 @@ export default function InventoryScreen() {
           {!form.foodId && <TextInput placeholder="O nombre manual" value={form.customName} onChangeText={(v) => setForm(p => ({ ...p, customName: v }))} className="bg-white border border-gray-200 rounded-xl px-4 py-3 mt-2" />}
           <View className="flex-row gap-3 mt-4">
             <TextInput keyboardType="numeric" placeholder="Cantidad" value={form.quantity} onChangeText={(v) => setForm(p => ({ ...p, quantity: v }))} className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3" />
-            <View className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-              <Text className="text-gray-700">{form.unit}</Text>
+          </View>
+          <View className="mt-3">
+            <Text className="text-sm font-medium text-gray-700 mb-2">Unidad</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {['g', 'kg', 'ml', 'l', 'u'].map((u) => (
+                <TouchableOpacity key={u} onPress={() => setForm(p => ({ ...p, unit: u }))} className={`px-4 py-2 rounded-xl border-2 ${form.unit === u ? 'border-brand-600 bg-brand-50' : 'border-gray-200'}`}>
+                  <Text className={`font-semibold text-sm ${form.unit === u ? 'text-brand-700' : 'text-gray-600'}`}>{u}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
           <View className="flex-row gap-3 mt-6">
