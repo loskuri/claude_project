@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth-store';
@@ -17,14 +17,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && !user) {
       router.replace('/login');
     }
-  }, [user, router]);
+  }, [hydrated, user, router]);
 
-  if (!user) return null;
+  if (!hydrated || !user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
