@@ -150,7 +150,7 @@ export default function DashboardPage() {
       {/* Comidas de hoy */}
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900">Comidas de hoy</h2>
+          <h2 className="font-semibold text-gray-900">Plan para hoy</h2>
           <Link href="/menu" className="text-sm text-brand-600 font-medium hover:underline">Ver menú completo →</Link>
         </div>
 

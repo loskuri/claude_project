@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
-import type { NutritionPlan, Meal } from '@nutriplan/shared';
+import type { NutritionPlan, Meal, NutritionTargets } from '@nutriplan/shared';
 import { DAY_NAMES_ES } from '@nutriplan/shared';
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
@@ -139,6 +139,11 @@ export default function MenuPage() {
     refetchInterval: 30_000,
   });
 
+  const { data: baseTargets } = useQuery<NutritionTargets>({
+    queryKey: ['nutrition-targets'],
+    queryFn: () => apiFetch('/nutrition/targets'),
+  });
+
   const { data: adjustedTargets } = useQuery<AdjustedTargets>({
     queryKey: ['diet-adjusted-targets'],
     queryFn: () => apiFetch('/diet/targets/adjusted'),
@@ -175,7 +180,7 @@ export default function MenuPage() {
 
   const dayMenu = plan?.weeklyMenus?.find((m) => m.dayOfWeek === selectedDay);
   const todayTotals = todaySummary?.totals;
-  const targets = adjustedTargets ?? { calories: 2000, proteinG: 150, carbsG: 200, fatG: 60 };
+  const targets = adjustedTargets ?? baseTargets ?? { calories: 2000, proteinG: 150, carbsG: 200, fatG: 60 };
 
   return (
     <div className="p-8">

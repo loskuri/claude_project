@@ -102,7 +102,7 @@ export default function RecipesScreen() {
           {inventory.length > 0 && (
             <View className="mt-4">
               <Text className="font-semibold text-gray-900 mb-2">Usar del inventario</Text>
-              {inventory.slice(0, 8).map((item) => (
+              {inventory.slice(0, 20).map((item) => (
                 <TouchableOpacity key={item.id} onPress={() => toggleItem(item.id)} className="flex-row items-center py-2">
                   <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${selectedItems.includes(item.id) ? 'bg-brand-600 border-brand-600' : 'border-gray-300'}`}>
                     {selectedItems.includes(item.id) && <Text className="text-white text-xs">✓</Text>}

@@ -29,6 +29,7 @@ export default function InventoryPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState({ foodId: '', customName: '', quantity: '', unit: 'g', expiryDate: '' });
   const [foodSearch, setFoodSearch] = useState('');
+  const [addedName, setAddedName] = useState<string | null>(null);
 
   const { data } = useQuery<{ items: InventoryItem[] }>({
     queryKey: ['inventory'],
@@ -43,7 +44,15 @@ export default function InventoryPage() {
 
   const addMutation = useMutation({
     mutationFn: (body: object) => apiFetch('/inventory', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory'] }); setShowAddForm(false); setForm({ foodId: '', customName: '', quantity: '', unit: 'g', expiryDate: '' }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory'] });
+      const name = form.foodId ? foodSearch : form.customName;
+      setAddedName(name);
+      setTimeout(() => setAddedName(null), 3000);
+      setShowAddForm(false);
+      setForm({ foodId: '', customName: '', quantity: '', unit: 'g', expiryDate: '' });
+      setFoodSearch('');
+    },
   });
 
   const deleteMutation = useMutation({
@@ -76,6 +85,18 @@ export default function InventoryPage() {
           + Agregar alimento
         </button>
       </div>
+
+      {addedName && (
+        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">
+          ✓ {addedName} agregado al inventario
+        </div>
+      )}
+
+      {items.some(i => i.expiryDate && daysUntil(i.expiryDate) !== null && (daysUntil(i.expiryDate) as number) <= 3) && (
+        <div className="mb-4 bg-orange-50 border border-orange-200 text-orange-700 text-sm px-4 py-3 rounded-xl">
+          ⚠️ Tenés alimentos próximos a vencer — revisá los marcados en naranja o rojo
+        </div>
+      )}
 
       {showAddForm && (
         <form onSubmit={handleAdd} className="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4">

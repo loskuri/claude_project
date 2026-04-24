@@ -1,11 +1,19 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
+import { validateBody } from '../../middleware/validate.middleware.js';
 import * as recipesService from './recipes.service.js';
 
 const router = Router();
 router.use(authMiddleware);
 
-router.post('/generate', async (req, res, next) => {
+const generateSchema = z.object({
+  inventoryItemIds: z.array(z.string()).optional(),
+  mealType: z.enum(['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER']).optional(),
+  servings: z.coerce.number().int().min(1).max(10).default(2),
+});
+
+router.post('/generate', validateBody(generateSchema), async (req, res, next) => {
   try {
     await recipesService.streamRecipe(req.user!.id, req.body, res);
   } catch (err) {

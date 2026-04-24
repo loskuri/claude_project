@@ -56,6 +56,15 @@ export async function deleteMealLog(userId: string, logId: string) {
   await prisma.mealLog.delete({ where: { id: logId } });
 }
 
+export const updateMealLogSchema = logMealSchema.partial().omit({ date: true, mealType: true });
+export type UpdateMealLogInput = z.infer<typeof updateMealLogSchema>;
+
+export async function updateMealLog(userId: string, logId: string, input: UpdateMealLogInput) {
+  const log = await prisma.mealLog.findFirst({ where: { id: logId, userId } });
+  if (!log) throw new AppError(404, 'Registro no encontrado');
+  return prisma.mealLog.update({ where: { id: logId }, data: input });
+}
+
 export async function getDailySummary(userId: string, date?: string) {
   const logs = await getMealLogs(userId, date);
   const totals = logs.reduce(

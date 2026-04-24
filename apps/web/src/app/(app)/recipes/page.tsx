@@ -37,6 +37,10 @@ export default function RecipesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-recipes'] }),
   });
 
+  function handleDeleteRecipe(id: string, name: string) {
+    if (window.confirm(`¿Eliminar "${name}"?`)) deleteMutation.mutate(id);
+  }
+
   function toggleItem(id: string) {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -169,7 +173,7 @@ export default function RecipesPage() {
                 <div className="flex justify-between items-start mb-1">
                   <h3 className="font-semibold text-gray-900">{recipe.name}</h3>
                   <button
-                    onClick={() => deleteMutation.mutate(recipe.id)}
+                    onClick={() => handleDeleteRecipe(recipe.id, recipe.name)}
                     disabled={deleteMutation.isPending}
                     className="text-gray-300 hover:text-red-500 transition ml-2 text-lg leading-none"
                     title="Eliminar receta"

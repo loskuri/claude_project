@@ -39,6 +39,15 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
+router.patch('/:id', validateBody(mealLogsService.updateMealLogSchema), async (req, res, next) => {
+  try {
+    const log = await mealLogsService.updateMealLog(req.user!.id, req.params.id, req.body);
+    res.json(log);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
     await mealLogsService.deleteMealLog(req.user!.id, req.params.id);
