@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { completeMessage } from '../../shared/claude.client.js';
-import { getCache, setCache, deleteCachePattern } from '../../shared/cache.service.js';
+import { getCache, setCache, deleteCachePattern, incrementCounter } from '../../shared/cache.service.js';
 import { getNutritionTargets } from '../nutrition/nutrition.service.js';
 import { buildDietPlanPrompt } from './diet.prompts.js';
 import { getWeekStart } from '@nutriplan/shared';
@@ -56,6 +56,10 @@ export async function generateDietPlan(userId: string, weekStartInput?: Date) {
   const cacheKey = `diet:plan:${userId}:${weekStart.toISOString().split('T')[0]}`;
   const cached = await getCache<ReturnType<typeof formatPlan>>(cacheKey);
   if (cached) return cached;
+
+  const today = new Date().toISOString().split('T')[0];
+  const genCount = await incrementCounter(`rate:diet:gen:${userId}:${today}`, 86400);
+  if (genCount > 3) throw new AppError(429, 'Límite diario de generación de planes alcanzado (3/día).');
 
   const prompt = buildDietPlanPrompt(
     {

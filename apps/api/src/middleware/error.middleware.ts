@@ -16,6 +16,6 @@ export const errorMiddleware: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
 
-  console.error(err);
+  if (process.env.NODE_ENV !== 'production') console.error(err);
   res.status(500).json({ error: 'Error interno del servidor' });
 };

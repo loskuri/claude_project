@@ -21,7 +21,7 @@ export function createApp() {
     cors({
       origin: process.env.NODE_ENV === 'production'
         ? process.env.ALLOWED_ORIGINS?.split(',')
-        : '*',
+        : ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:19006'],
       credentials: true,
     }),
   );
@@ -35,6 +35,14 @@ export function createApp() {
     }),
   );
 
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Demasiados intentos. Esperá 15 minutos.' },
+  });
+
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', (_req, res) => {
@@ -42,6 +50,8 @@ export function createApp() {
   });
 
   const api = express.Router();
+  api.use('/auth/login', authLimiter);
+  api.use('/auth/register', authLimiter);
   api.use('/auth', authRoutes);
   api.use('/users', usersRoutes);
   api.use('/nutrition', nutritionRoutes);

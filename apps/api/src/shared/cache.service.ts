@@ -15,8 +15,16 @@ export async function deleteCache(key: string): Promise<void> {
 }
 
 export async function deleteCachePattern(pattern: string): Promise<void> {
-  const keys = await redis.keys(pattern);
-  if (keys.length > 0) {
-    await redis.del(...keys);
-  }
+  let cursor = '0';
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', '100');
+    cursor = next;
+    if (keys.length > 0) await redis.del(...keys);
+  } while (cursor !== '0');
+}
+
+export async function incrementCounter(key: string, ttlSeconds: number): Promise<number> {
+  const count = await redis.incr(key);
+  if (count === 1) await redis.expire(key, ttlSeconds);
+  return count;
 }

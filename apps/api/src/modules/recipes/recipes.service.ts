@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { streamMessage } from '../../shared/claude.client.js';
+import { incrementCounter } from '../../shared/cache.service.js';
 import { buildRecipePrompt } from './recipes.prompts.js';
 import type { MealType } from '@nutriplan/shared';
 
@@ -24,6 +25,13 @@ export async function streamRecipe(
     }));
   }
 
+  const today = new Date().toISOString().split('T')[0];
+  const genCount = await incrementCounter(`rate:recipe:gen:${userId}:${today}`, 86400);
+  if (genCount > 10) {
+    res.status(429).json({ error: 'Límite diario de generación de recetas alcanzado (10/día).' });
+    return;
+  }
+
   const prompt = buildRecipePrompt({
     inventoryItems,
     mealType: params.mealType,
@@ -34,7 +42,6 @@ export async function streamRecipe(
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
   });
 
   let fullText = '';
