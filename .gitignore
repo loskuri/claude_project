@@ -10,3 +10,4 @@ coverage/
 .expo/
 android/
 ios/
+*.tsbuildinfo
