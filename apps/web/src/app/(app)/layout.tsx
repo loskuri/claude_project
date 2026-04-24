@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth-store';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Inicio', icon: '🏠' },
-  { href: '/menu', label: 'Mi menú', icon: '📅' },
-  { href: '/inventory', label: 'Inventario', icon: '📦' },
-  { href: '/recipes', label: 'Recetas', icon: '🍳' },
-  { href: '/progress', label: 'Progreso', icon: '📈' },
+  { href: '/dashboard', label: 'Inicio', icon: '🏠', desc: 'Tu resumen diario' },
+  { href: '/menu', label: 'Mi menú', icon: '📅', desc: 'Plan semanal' },
+  { href: '/inventory', label: 'Inventario', icon: '📦', desc: 'Alimentos en casa' },
+  { href: '/recipes', label: 'Recetas IA', icon: '🍳', desc: 'Generá recetas' },
+  { href: '/progress', label: 'Progreso', icon: '📈', desc: 'Peso y macros' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,12 +24,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated && !user) {
+    if (!hydrated) return;
+    if (!user) {
       router.replace('/login');
+    } else if (!user.onboardingComplete) {
+      router.replace('/onboarding');
     }
   }, [hydrated, user, router]);
 
-  if (!hydrated || !user) return null;
+  if (!hydrated || !user || !user.onboardingComplete) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -48,10 +51,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${active ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition group ${active ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'}`}
               >
-                <span>{item.icon}</span>
-                {item.label}
+                <span className="text-lg">{item.icon}</span>
+                <div>
+                  <div className={`text-sm font-medium ${active ? 'text-brand-700' : 'text-gray-700'}`}>{item.label}</div>
+                  <div className="text-xs text-gray-400">{item.desc}</div>
+                </div>
               </Link>
             );
           })}
