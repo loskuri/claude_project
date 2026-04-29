@@ -14,8 +14,18 @@ export function buildRecipePrompt(params: {
   servings?: number;
   targetCalories?: number;
   targetProteinG?: number;
+  ingredientsText?: string;
+  suggestionsText?: string;
 }): string {
-  const { inventoryItems, mealType, servings = 2, targetCalories, targetProteinG } = params;
+  const {
+    inventoryItems,
+    mealType,
+    servings = 2,
+    targetCalories,
+    targetProteinG,
+    ingredientsText,
+    suggestionsText,
+  } = params;
 
   const ingredientsList =
     inventoryItems.length > 0
@@ -25,6 +35,12 @@ export function buildRecipePrompt(params: {
   const mealLabel = mealType ? `para ${MEAL_LABELS[mealType]}` : '';
   const calorieTarget = targetCalories ? `~${Math.round(targetCalories / servings)} kcal por porción` : '';
   const proteinTarget = targetProteinG ? `, proteínas ~${Math.round(targetProteinG / servings)}g` : '';
+  const extraIngredientsInstruction = ingredientsText?.trim()
+    ? `\n- Ingredientes solicitados por el usuario (deben estar presentes en la receta): ${ingredientsText.trim()}`
+    : '';
+  const suggestionsInstruction = suggestionsText?.trim()
+    ? `\n- Preferencias del usuario (usarlas para orientar sabor/estilo): ${suggestionsText.trim()}`
+    : '';
 
   return `Generá una receta ${mealLabel} usando principalmente estos ingredientes disponibles:
 ${ingredientsList}
@@ -34,6 +50,7 @@ Requisitos:
 ${calorieTarget}${proteinTarget}
 - Receta práctica, con pasos claros
 - Nombres y medidas en español argentino
+${extraIngredientsInstruction}${suggestionsInstruction}
 
 Devolvé EXACTAMENTE este JSON (sin texto adicional):
 {

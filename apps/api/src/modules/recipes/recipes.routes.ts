@@ -11,6 +11,8 @@ const generateSchema = z.object({
   inventoryItemIds: z.array(z.string()).optional(),
   mealType: z.enum(['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER']).optional(),
   servings: z.coerce.number().int().min(1).max(10).default(2),
+  ingredientsText: z.string().trim().max(2000).optional(),
+  suggestionsText: z.string().trim().max(2000).optional(),
 });
 
 router.post('/generate', validateBody(generateSchema), async (req, res, next) => {

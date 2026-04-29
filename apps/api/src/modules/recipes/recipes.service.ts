@@ -1,14 +1,20 @@
 import type { Response } from 'express';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
-import { streamMessage } from '../../shared/claude.client.js';
+import { streamMessage } from '../../shared/ai.client.js';
 import { incrementCounter } from '../../shared/cache.service.js';
 import { buildRecipePrompt } from './recipes.prompts.js';
 import type { MealType } from '@nutriplan/shared';
 
 export async function streamRecipe(
   userId: string,
-  params: { inventoryItemIds?: string[]; mealType?: MealType; servings?: number },
+  params: {
+    inventoryItemIds?: string[];
+    mealType?: MealType;
+    servings?: number;
+    ingredientsText?: string;
+    suggestionsText?: string;
+  },
   res: Response,
 ): Promise<void> {
   let inventoryItems: Array<{ name: string; quantity: number; unit: string }> = [];
@@ -36,6 +42,8 @@ export async function streamRecipe(
     inventoryItems,
     mealType: params.mealType,
     servings: params.servings ?? 2,
+    ingredientsText: params.ingredientsText,
+    suggestionsText: params.suggestionsText,
   });
 
   res.writeHead(200, {

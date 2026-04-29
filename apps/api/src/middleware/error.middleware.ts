@@ -10,12 +10,13 @@ export class AppError extends Error {
   }
 }
 
-export const errorMiddleware: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorMiddleware: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
+    console.error(`[AppError] ${req.method} ${req.path} → ${err.statusCode}: ${err.message}`);
     res.status(err.statusCode).json({ error: err.message });
     return;
   }
 
-  if (process.env.NODE_ENV !== 'production') console.error(err);
+  console.error(`[UnhandledError] ${req.method} ${req.path}`, err);
   res.status(500).json({ error: 'Error interno del servidor' });
 };

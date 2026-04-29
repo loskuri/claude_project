@@ -30,25 +30,19 @@ export interface Meal {
   preparationSteps: string[];
 }
 
-export interface DayMenu {
+export interface NutritionPlan {
+  id: string;
+  userId: string;
+  date: string;
   dayOfWeek: number;
-  dayName: string;
   totalCalories: number;
   totalProteinG: number;
   totalCarbsG: number;
   totalFatG: number;
-  meals: Meal[];
-}
-
-export interface NutritionPlan {
-  id: string;
-  userId: string;
-  weekStart: string;
   targetCalories: number;
   targetProteinG: number;
   targetCarbsG: number;
   targetFatG: number;
   generatedAt: string;
-  weeklyMenus: DayMenu[];
-  isActive: boolean;
+  meals: Meal[];
 }

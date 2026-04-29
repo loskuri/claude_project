@@ -13,10 +13,15 @@ interface MacroDay { date: string; calories: number; proteinG: number; carbsG: n
 
 type ActiveTab = 'weight' | 'macros';
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function ProgressPage() {
   const qc = useQueryClient();
   const [weight, setWeight] = useState('');
   const [notes, setNotes] = useState('');
+  const [date, setDate] = useState(todayISO());
   const [tab, setTab] = useState<ActiveTab>('weight');
 
   const { data: weightData, isLoading: loadingWeight } = useQuery<{ logs: WeightLog[] }>({
@@ -31,7 +36,7 @@ export default function ProgressPage() {
 
   const addMutation = useMutation({
     mutationFn: (body: object) => apiFetch('/progress/weight', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress-weight'] }); setWeight(''); setNotes(''); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress-weight'] }); setWeight(''); setNotes(''); setDate(todayISO()); },
   });
 
   const logs = weightData?.logs ?? [];
@@ -62,9 +67,25 @@ export default function ProgressPage() {
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <h2 className="font-semibold text-gray-900 mb-4">Registrar peso</h2>
           <form
-            onSubmit={(e) => { e.preventDefault(); addMutation.mutate({ weightKg: Number(weight), notes }); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              addMutation.mutate({
+                weightKg: Number(weight),
+                date: new Date(date).toISOString(),
+                notes: notes || undefined,
+              });
+            }}
             className="space-y-3"
           >
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Fecha</label>
+              <input
+                type="date" required value={date}
+                max={todayISO()}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+              />
+            </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Peso (kg)</label>
               <input
@@ -163,11 +184,16 @@ export default function ProgressPage() {
           </div>
           <div className="divide-y divide-gray-50">
             {[...logs].reverse().map((log) => (
-              <div key={log.id} className="px-6 py-3 flex items-center justify-between">
-                <span className="text-sm text-gray-500">
-                  {new Date(log.date).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </span>
-                <span className="font-semibold text-gray-900">{log.weightKg} kg</span>
+              <div key={log.id} className="px-6 py-3 flex items-center justify-between gap-4">
+                <div>
+                  <span className="text-sm text-gray-700 font-medium">
+                    {new Date(log.date).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {log.notes && (
+                    <p className="text-xs text-gray-400 mt-0.5">{log.notes}</p>
+                  )}
+                </div>
+                <span className="font-semibold text-gray-900 shrink-0">{log.weightKg} kg</span>
               </div>
             ))}
           </div>

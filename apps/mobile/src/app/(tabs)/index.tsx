@@ -31,9 +31,8 @@ export default function DashboardScreen() {
     retry: false,
   });
 
-  const today = new Date().getDay();
-  const todayIndex = today === 0 ? 6 : today - 1;
-  const todayMenu = plan?.weeklyMenus?.find((m) => m.dayOfWeek === todayIndex);
+  const todayIndex = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
+  const todayMenu = plan;
 
   return (
     <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>

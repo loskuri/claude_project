@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { completeMessage } from '../../shared/ai.client.js';
+
+function utcMidnight(dateStr?: string): Date {
+  if (dateStr) return new Date(dateStr + 'T00:00:00.000Z');
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
 
 export const logMealSchema = z.object({
   date: z.string().optional(),
@@ -18,9 +26,7 @@ export const logMealSchema = z.object({
 export type LogMealInput = z.infer<typeof logMealSchema>;
 
 export async function logMeal(userId: string, input: LogMealInput) {
-  const date = input.date ? new Date(input.date) : new Date();
-  date.setHours(0, 0, 0, 0);
-
+  const date = utcMidnight(input.date);
   return prisma.mealLog.create({
     data: {
       userId,
@@ -39,10 +45,9 @@ export async function logMeal(userId: string, input: LogMealInput) {
 }
 
 export async function getMealLogs(userId: string, date?: string) {
-  const targetDate = date ? new Date(date) : new Date();
-  targetDate.setHours(0, 0, 0, 0);
+  const targetDate = utcMidnight(date);
   const nextDay = new Date(targetDate);
-  nextDay.setDate(nextDay.getDate() + 1);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
 
   return prisma.mealLog.findMany({
     where: { userId, date: { gte: targetDate, lt: nextDay } },
@@ -76,21 +81,21 @@ export async function getDailySummary(userId: string, date?: string) {
     }),
     { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
   );
-  return { date: (date ? new Date(date) : new Date()).toISOString().split('T')[0], logs, totals };
+  const dateStr = date ?? new Date().toISOString().split('T')[0];
+  return { date: dateStr, logs, totals };
 }
 
 export async function getMacroHistory(userId: string, from?: string, to?: string) {
   const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  fromDate.setHours(0, 0, 0, 0);
+  fromDate.setUTCHours(0, 0, 0, 0);
   const toDate = to ? new Date(to) : new Date();
-  toDate.setHours(23, 59, 59, 999);
+  toDate.setUTCHours(23, 59, 59, 999);
 
   const logs = await prisma.mealLog.findMany({
     where: { userId, date: { gte: fromDate, lte: toDate } },
     orderBy: { date: 'asc' },
   });
 
-  // Group by date
   const byDate = new Map<string, { calories: number; proteinG: number; carbsG: number; fatG: number }>();
   for (const log of logs) {
     const key = log.date.toISOString().split('T')[0];
@@ -104,4 +109,72 @@ export async function getMacroHistory(userId: string, from?: string, to?: string
   }
 
   return Array.from(byDate.entries()).map(([date, totals]) => ({ date, ...totals }));
+}
+
+const customMealResponseSchema = z.object({
+  name: z.string(),
+  mealType: z.enum(['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER']),
+  calories: z.number().positive(),
+  proteinG: z.number().min(0),
+  carbsG: z.number().min(0),
+  fatG: z.number().min(0),
+  quantity: z.number().positive().default(1),
+  unit: z.string().default('porcion'),
+});
+
+export async function logMealFromText(userId: string, text: string, dateStr?: string) {
+  const prompt = `Analiza esta comida y devuelve información nutricional estimada.
+
+Descripción: "${text}"
+
+Devuelve SOLO un JSON con esta estructura exacta (sin markdown ni texto extra):
+{
+  "name": "nombre descriptivo de la comida",
+  "mealType": "BREAKFAST" | "MORNING_SNACK" | "LUNCH" | "AFTERNOON_SNACK" | "DINNER",
+  "calories": número (kcal totales de la porción descrita),
+  "proteinG": número (gramos de proteína),
+  "carbsG": número (gramos de carbohidratos),
+  "fatG": número (gramos de grasa),
+  "quantity": 1,
+  "unit": "porcion"
+}
+
+Reglas:
+- Estimá calorías y macros para la cantidad y alimentos descritos
+- Si no se especifica cantidad, asumí una porción estándar argentina
+- mealType debe ser el más apropiado según la comida (desayuno, almuerzo, etc.)
+- Sé realista y conservador con los valores`;
+
+  let rawResponse: string;
+  try {
+    rawResponse = await completeMessage({ userMessage: prompt, maxTokens: 512 });
+  } catch {
+    throw new AppError(503, 'No se pudo analizar la comida. Intentá de nuevo.');
+  }
+
+  let parsed: z.infer<typeof customMealResponseSchema>;
+  try {
+    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found');
+    parsed = customMealResponseSchema.parse(JSON.parse(jsonMatch[0]));
+  } catch {
+    throw new AppError(503, 'No se pudo interpretar la comida. Intentá describir con más detalle.');
+  }
+
+  const date = utcMidnight(dateStr);
+  return prisma.mealLog.create({
+    data: {
+      userId,
+      date,
+      mealType: parsed.mealType,
+      name: parsed.name,
+      calories: parsed.calories,
+      proteinG: parsed.proteinG,
+      carbsG: parsed.carbsG,
+      fatG: parsed.fatG,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      notes: `Descripción original: ${text}`,
+    },
+  });
 }

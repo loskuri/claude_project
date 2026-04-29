@@ -64,4 +64,54 @@ export async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
+export async function apiStream(
+  path: string,
+  options: RequestInit = {},
+  onEvent: (event: Record<string, unknown>) => void,
+): Promise<void> {
+  const { accessToken } = useAuthStore.getState();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'Error desconocido' }));
+    throw new ApiError(res.status, (body as { error?: string }).error ?? res.statusText);
+  }
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
+        if (event.type === 'error') {
+          throw new ApiError(
+            typeof event.status === 'number' ? event.status : 500,
+            typeof event.message === 'string' ? event.message : 'Error desconocido',
+          );
+        }
+        onEvent(event);
+      } catch (e) {
+        if (e instanceof ApiError) throw e;
+      }
+    }
+  }
+}
+
 export { ApiError, API_URL };

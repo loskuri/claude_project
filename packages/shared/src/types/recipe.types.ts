@@ -23,4 +23,6 @@ export interface GenerateRecipeInput {
   inventoryItemIds?: string[];
   mealType?: MealType;
   servings?: number;
+  ingredientsText?: string;
+  suggestionsText?: string;
 }

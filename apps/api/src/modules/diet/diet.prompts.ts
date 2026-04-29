@@ -24,6 +24,7 @@ export function buildDietPlanPrompt(
   preferences: UserPreferences | null,
   targets: NutritionTargets,
   weekStart: Date,
+  days = 7,
 ): string {
   const ageYears = Math.floor(
     (Date.now() - new Date(profile.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25),
@@ -35,13 +36,13 @@ export function buildDietPlanPrompt(
   const disliked = preferences?.dislikedFoods?.join(', ') || 'ninguno';
   const dietaryType = preferences?.dietaryType ?? 'OMNIVORE';
 
-  const weekDays = DAY_NAMES_ES.map((name, i) => {
+  const weekDays = DAY_NAMES_ES.slice(0, days).map((name, i) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
     return `${name} ${d.toISOString().split('T')[0]}`;
   });
 
-  return `Generá un plan de alimentación de 7 días para:
+  return `Generá un plan de alimentación de ${days} día${days > 1 ? 's' : ''} para:
 - Sexo: ${profile.sex === 'MALE' ? 'Masculino' : 'Femenino'}, Edad: ${ageYears} años
 - Altura: ${profile.heightCm}cm, Peso: ${profile.weightKg}kg
 - Objetivo: ${profile.goal}
@@ -59,7 +60,7 @@ RESTRICCIONES:
 - Alimentos a evitar: ${disliked}
 - Comidas por día: ${mealsPerDay} (${mealTypeLabels})
 
-SEMANA DEL: ${weekDays[0]} al ${weekDays[6]}
+SEMANA DEL: ${weekDays[0]}${days > 1 ? ` al ${weekDays[days - 1]}` : ''}
 
 Devolvé EXACTAMENTE este JSON (sin texto adicional):
 {
@@ -92,5 +93,5 @@ Devolvé EXACTAMENTE este JSON (sin texto adicional):
   ]
 }
 
-Incluí exactamente 7 días (dayOfWeek 0=Lunes a 6=Domingo). Cada día debe tener exactamente ${mealsPerDay} comidas con los tipos: ${mealTypes.join(', ')}.`;
+Incluí exactamente ${days} día${days > 1 ? 's' : ''} (dayOfWeek 0=Lunes${days > 1 ? ` a ${days - 1}=${DAY_NAMES_ES[days - 1]}` : ' solamente'}). Cada día debe tener exactamente ${mealsPerDay} comidas con los tipos: ${mealTypes.join(', ')}.`;
 }

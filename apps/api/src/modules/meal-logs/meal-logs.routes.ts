@@ -6,6 +6,24 @@ import * as mealLogsService from './meal-logs.service.js';
 const router = Router();
 router.use(authMiddleware);
 
+router.post('/from-text', async (req, res, next) => {
+  try {
+    const { text, date } = req.body as { text?: unknown; date?: unknown };
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      res.status(400).json({ error: 'Se requiere una descripción de la comida' });
+      return;
+    }
+    if (date !== undefined && typeof date !== 'string') {
+      res.status(400).json({ error: 'Formato de fecha inválido' });
+      return;
+    }
+    const log = await mealLogsService.logMealFromText(req.user!.id, text.trim(), date as string | undefined);
+    res.status(201).json(log);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/', validateBody(mealLogsService.logMealSchema), async (req, res, next) => {
   try {
     const log = await mealLogsService.logMeal(req.user!.id, req.body);

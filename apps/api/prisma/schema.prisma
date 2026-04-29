@@ -63,41 +63,30 @@ model UserPreferences {
 // ─── NUTRITION ENGINE ────────────────────────────────────────
 
 model NutritionPlan {
-  id             String       @id @default(cuid())
+  id             String    @id @default(cuid())
   userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weekStart      DateTime
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime  // specific day this plan covers (midnight UTC)
+  dayOfWeek      Int       // 0=Monday … 6=Sunday
+  totalCalories  Float
+  totalProteinG  Float
+  totalCarbsG    Float
+  totalFatG      Float
   targetCalories Float
   targetProteinG Float
   targetCarbsG   Float
   targetFatG     Float
-  generatedAt    DateTime     @default(now())
-  weeklyMenus    WeeklyMenu[]
-  isActive       Boolean      @default(true)
+  generatedAt    DateTime  @default(now())
+  meals          Meal[]
 
+  @@unique([userId, date])
   @@map("nutrition_plans")
 }
 
-model WeeklyMenu {
-  id              String        @id @default(cuid())
-  nutritionPlanId String
-  nutritionPlan   NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
-  dayOfWeek       Int
-  dayName         String
-  totalCalories   Float
-  totalProteinG   Float
-  totalCarbsG     Float
-  totalFatG       Float
-  meals           Meal[]
-
-  @@unique([nutritionPlanId, dayOfWeek])
-  @@map("weekly_menus")
-}
-
 model Meal {
-  id               String     @id @default(cuid())
-  weeklyMenuId     String
-  weeklyMenu       WeeklyMenu @relation(fields: [weeklyMenuId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  nutritionPlanId  String
+  nutritionPlan    NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
   mealType         MealType
   name             String
   description      String

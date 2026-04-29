@@ -8,7 +8,6 @@ import { useAuthStore } from '@/lib/auth-store';
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Inicio', icon: '🏠', desc: 'Tu resumen diario' },
   { href: '/menu', label: 'Mi menú', icon: '📅', desc: 'Plan semanal' },
-  { href: '/inventory', label: 'Inventario', icon: '📦', desc: 'Alimentos en casa' },
   { href: '/recipes', label: 'Recetas IA', icon: '🍳', desc: 'Generá recetas' },
   { href: '/progress', label: 'Progreso', icon: '📈', desc: 'Peso y macros' },
 ];

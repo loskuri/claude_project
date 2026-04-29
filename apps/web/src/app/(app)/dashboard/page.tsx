@@ -76,7 +76,7 @@ export default function DashboardPage() {
     queryFn: () => apiFetch(`/meal-logs?date=${today}`),
   });
 
-  const todayMenu = plan?.weeklyMenus?.find((m) => m.dayOfWeek === todayIndex);
+  const todayMenu = plan;
   const consumed = dailySummary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
   const hour = new Date().getHours();
