@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>NutriPlan - Mockup UX/UI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .nav-item { transition: all 0.2s; }
+  .nav-item:hover { background: #f0fdf4; }
+  .nav-item.active { background: #dcfce7; color: #15803d; font-weight: 600; }
+  .phone {
+    width: 375px;
+    height: 750px;
+    border: 12px solid #1f2937;
+    border-radius: 40px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    margin: 0 auto;
+  }
+  .phone-content { height: 100%; overflow-y: auto; }
+  .web-frame {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+  .wa-bubble-in {
+    background: white;
+    border-radius: 12px;
+    padding: 8px 12px;
+    max-width: 75%;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.1);
+  }
+  .wa-bubble-out {
+    background: #d9fdd3;
+    border-radius: 12px;
+    padding: 8px 12px;
+    max-width: 75%;
+    margin-left: auto;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.1);
+  }
+</style>
+</head>
+<body class="bg-gray-100">
+
+<div class="flex h-screen">
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-white border-r border-gray-200 overflow-y-auto">
+    <div class="p-4 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-green-700">🥗 NutriPlan</h1>
+      <p class="text-xs text-gray-500 mt-1">Mockup UX/UI</p>
+    </div>
+    <nav class="p-2">
+      <p class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase">Web</p>
+      <button onclick="showScreen('landing')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">🏠 Landing</button>
+      <button onclick="showScreen('onboarding')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">📝 Onboarding</button>
+      <button onclick="showScreen('dashboard')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">📊 Dashboard / Hoy</button>
+      <button onclick="showScreen('plan')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">📅 Plan semanal + budget</button>
+      <button onclick="showScreen('recipe')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">🍳 Receta detalle</button>
+      <button onclick="showScreen('shopping')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">🛒 Lista de compras</button>
+      <button onclick="showScreen('social')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">👥 Social</button>
+      <button onclick="showScreen('progress')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">📈 Progreso</button>
+      <p class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase mt-4">WhatsApp</p>
+      <button onclick="showScreen('whatsapp')" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm">💬 Chat WhatsApp</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 overflow-y-auto p-8">
+
+    <!-- SCREENS GO HERE -->
+    <div id="landing" class="screen active">
+      <h2 class="text-2xl font-bold mb-1">Landing Page</h2>
+      <p class="text-gray-500 mb-6">Primera impresión del usuario</p>
+      <div class="web-frame">
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white p-12">
+          <div class="flex justify-between items-center mb-12">
+            <span class="text-2xl font-bold">🥗 NutriPlan</span>
+            <div class="space-x-4 text-sm">
+              <a class="hover:underline">Cómo funciona</a>
+              <a class="hover:underline">Precios</a>
+              <button class="bg-white text-green-700 px-4 py-2 rounded-lg font-semibold">Ingresar</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 class="text-5xl font-bold leading-tight mb-4">Comé mejor sin gastar de más 🇦🇷</h1>
+              <p class="text-xl mb-8 text-green-100">Plan semanal de comidas adaptado a tu objetivo y a tu bolsillo. Trackeá desde WhatsApp.</p>
+              <div class="space-x-4">
+                <button class="bg-white text-green-700 px-8 py-4 rounded-xl font-bold text-lg">Empezar gratis</button>
+                <button class="border-2 border-white px-8 py-4 rounded-xl font-bold text-lg">Ver demo</button>
+              </div>
+              <p class="text-sm text-green-100 mt-4">✓ Sin tarjeta · ✓ 1 plan gratis al mes</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur p-6 rounded-2xl border border-white/20">
+              <div class="bg-white text-gray-800 rounded-xl p-4 mb-3">
+                <div class="text-xs text-gray-500 mb-1">📊 Hoy</div>
+                <div class="text-3xl font-bold text-green-600">1.450 / 2.000</div>
+                <div class="text-xs text-gray-500">kcal · $2.350 / $3.500 budget</div>
+              </div>
+              <div class="bg-green-100 text-green-800 text-sm rounded-lg p-3">💬 "¿Qué cocino hoy?" → Milanesa al horno (650 kcal · $1.200)</div>
+            </div>
+          </div>
+        </div>
+        <div class="p-12 grid grid-cols-3 gap-6">
+          <div class="text-center">
+            <div class="text-4xl mb-2">📱</div>
+            <h3 class="font-bold mb-1">WhatsApp first</h3>
+            <p class="text-sm text-gray-600">Registrá comidas en segundos. Sin instalar nada.</p>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl mb-2">💰</div>
+            <h3 class="font-bold mb-1">Adaptado a tu budget</h3>
+            <p class="text-sm text-gray-600">Plan semanal según lo que querés gastar.</p>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl mb-2">🇦🇷</div>
+            <h3 class="font-bold mb-1">Comida argentina</h3>
+            <p class="text-sm text-gray-600">5000+ alimentos locales: asado, milanesas, mate.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="onboarding" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Onboarding Wizard</h2>
+      <p class="text-gray-500 mb-6">6 pasos cortos, una pregunta por pantalla</p>
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Paso 1 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 1 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:16%"></div></div>
+          <h3 class="text-xl font-bold mb-2">¿Cómo te llamamos? 👋</h3>
+          <p class="text-sm text-gray-500 mb-6">Para personalizar tu experiencia</p>
+          <input type="text" placeholder="Juan" class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 mb-4">
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Siguiente →</button>
+          <button class="w-full text-sm text-gray-500 mt-3">Saltar por ahora</button>
+        </div>
+        <!-- Paso 2 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 2 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:33%"></div></div>
+          <h3 class="text-xl font-bold mb-2">Datos físicos 📏</h3>
+          <p class="text-sm text-gray-500 mb-6">Para calcular tus calorías diarias</p>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <button class="border-2 border-green-500 bg-green-50 rounded-lg py-2 text-sm font-semibold">♂ Hombre</button>
+            <button class="border-2 border-gray-200 rounded-lg py-2 text-sm">♀ Mujer</button>
+          </div>
+          <input type="number" placeholder="Edad" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 mb-2">
+          <input type="number" placeholder="Altura (cm)" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 mb-2">
+          <input type="number" placeholder="Peso (kg)" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 mb-4">
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Siguiente →</button>
+        </div>
+        <!-- Paso 3 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 3 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:50%"></div></div>
+          <h3 class="text-xl font-bold mb-2">¿Qué buscás? 🎯</h3>
+          <p class="text-sm text-gray-500 mb-6">Tu objetivo principal</p>
+          <div class="space-y-2 mb-4">
+            <button class="w-full text-left border-2 border-green-500 bg-green-50 rounded-lg p-3"><span class="text-2xl mr-2">📉</span><span class="font-semibold">Perder peso</span></button>
+            <button class="w-full text-left border-2 border-gray-200 rounded-lg p-3"><span class="text-2xl mr-2">⚖️</span><span>Mantener</span></button>
+            <button class="w-full text-left border-2 border-gray-200 rounded-lg p-3"><span class="text-2xl mr-2">💪</span><span>Ganar músculo</span></button>
+          </div>
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Siguiente →</button>
+        </div>
+        <!-- Paso 4 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 4 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:66%"></div></div>
+          <h3 class="text-xl font-bold mb-2">Restricciones 🥦</h3>
+          <p class="text-sm text-gray-500 mb-6">Marcá lo que aplique</p>
+          <div class="space-y-2 mb-4">
+            <label class="flex items-center border-2 border-gray-200 rounded-lg p-2 cursor-pointer"><input type="checkbox" class="mr-2"> Vegetariano</label>
+            <label class="flex items-center border-2 border-gray-200 rounded-lg p-2 cursor-pointer"><input type="checkbox" class="mr-2"> Vegano</label>
+            <label class="flex items-center border-2 border-green-500 bg-green-50 rounded-lg p-2 cursor-pointer"><input type="checkbox" class="mr-2" checked> Sin gluten</label>
+            <label class="flex items-center border-2 border-gray-200 rounded-lg p-2 cursor-pointer"><input type="checkbox" class="mr-2"> Sin lactosa</label>
+          </div>
+          <input type="text" placeholder="Otras alergias (separá con comas)" class="w-full border-2 border-gray-200 rounded-lg px-4 py-2 mb-4 text-sm">
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Siguiente →</button>
+        </div>
+        <!-- Paso 5 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 5 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:83%"></div></div>
+          <h3 class="text-xl font-bold mb-2">Tu budget semanal 💰</h3>
+          <p class="text-sm text-gray-500 mb-6">¿Cuánto querés gastar en comida?</p>
+          <div class="text-center text-3xl font-bold text-green-600 mb-4">$25.000</div>
+          <input type="range" min="10000" max="60000" value="25000" class="w-full mb-2">
+          <div class="flex justify-between text-xs text-gray-400 mb-6">
+            <span>$10.000</span><span>$60.000</span>
+          </div>
+          <p class="text-xs text-gray-500 mb-4 bg-yellow-50 p-2 rounded">💡 Promedio en AR: $20.000-$35.000/sem para 1 persona</p>
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Siguiente →</button>
+        </div>
+        <!-- Paso 6 -->
+        <div class="web-frame p-8">
+          <div class="text-xs text-gray-400 mb-2">Paso 6 de 6</div>
+          <div class="h-1 bg-gray-200 rounded-full mb-6"><div class="h-1 bg-green-500 rounded-full" style="width:100%"></div></div>
+          <h3 class="text-xl font-bold mb-2">Conectá WhatsApp 📲</h3>
+          <p class="text-sm text-gray-500 mb-6">Registrá comidas en segundos</p>
+          <div class="bg-gray-100 rounded-lg p-6 text-center mb-4">
+            <div class="w-32 h-32 bg-white border-4 border-gray-300 mx-auto mb-2 flex items-center justify-center text-4xl">▦</div>
+            <p class="text-xs text-gray-500">Escaneá con tu cámara</p>
+          </div>
+          <button class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold mb-2">¡Empezar! 🚀</button>
+          <button class="w-full text-sm text-gray-500">Conectar WhatsApp después</button>
+        </div>
+      </div>
+    </div>
+    <div id="dashboard" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Dashboard / Hoy</h2>
+      <p class="text-gray-500 mb-6">El home del usuario - lo primero que ve al entrar</p>
+      <div class="web-frame">
+        <!-- Header -->
+        <div class="bg-white border-b px-6 py-4 flex justify-between items-center">
+          <div>
+            <h2 class="font-bold text-lg">Hola Juan 👋</h2>
+            <p class="text-sm text-gray-500">Lunes 1 de mayo</p>
+          </div>
+          <div class="flex gap-3">
+            <button class="text-sm text-gray-600">📅 Plan</button>
+            <button class="text-sm text-gray-600">🍳 Recetas</button>
+            <button class="text-sm text-gray-600">🛒 Compras</button>
+            <button class="text-sm text-gray-600">👥 Social</button>
+            <div class="w-8 h-8 bg-green-500 rounded-full text-white flex items-center justify-center font-bold">J</div>
+          </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-3 gap-6">
+          <!-- Calorías card -->
+          <div class="col-span-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Calorías de hoy</h3>
+              <span class="text-xs bg-white/20 px-2 py-1 rounded-full">Plan: 2.000 kcal</span>
+            </div>
+            <div class="flex items-center gap-6">
+              <svg class="progress-ring" width="140" height="140">
+                <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.2)" stroke-width="12" fill="none"/>
+                <circle cx="70" cy="70" r="60" stroke="white" stroke-width="12" fill="none" stroke-dasharray="377" stroke-dashoffset="103" stroke-linecap="round"/>
+              </svg>
+              <div>
+                <div class="text-5xl font-bold">1.450</div>
+                <div class="text-green-100">de 2.000 kcal</div>
+                <div class="text-xs mt-2 bg-white/20 px-2 py-1 rounded inline-block">550 kcal restantes</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Budget card -->
+          <div class="bg-white border rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm">💰 Budget de hoy</h3>
+            </div>
+            <div class="text-3xl font-bold text-gray-800">$2.350</div>
+            <div class="text-xs text-gray-500 mb-3">de $3.500 planeado</div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+              <div class="h-2 bg-green-500" style="width:67%"></div>
+            </div>
+            <div class="text-xs text-gray-500">Semana: $14.180 / $25.000</div>
+            <div class="h-1 bg-gray-200 rounded-full overflow-hidden mt-1">
+              <div class="h-1 bg-blue-500" style="width:57%"></div>
+            </div>
+          </div>
+
+          <!-- Macros -->
+          <div class="col-span-3 bg-white border rounded-2xl p-6">
+            <h3 class="font-semibold mb-4">Macronutrientes</h3>
+            <div class="grid grid-cols-4 gap-4">
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🥩 Proteínas</span><span class="text-gray-500">95/120g</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-red-500 rounded-full" style="width:79%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🍞 Carbs</span><span class="text-gray-500">150/200g</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-yellow-500 rounded-full" style="width:75%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🥑 Grasas</span><span class="text-gray-500">52/65g</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-orange-500 rounded-full" style="width:80%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>💧 Agua</span><span class="text-gray-500">1.2/2L</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-blue-500 rounded-full" style="width:60%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comidas de hoy -->
+          <div class="col-span-3 bg-white border rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold">Comidas de hoy</h3>
+              <button class="text-sm text-green-600 font-semibold">+ Agregar comida</button>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center gap-4 p-3 bg-green-50 rounded-lg">
+                <div class="text-2xl">🌅</div>
+                <div class="flex-1"><div class="font-semibold">Desayuno · Tostadas con palta</div><div class="text-xs text-gray-500">450 kcal · $380 · ✅ Consumido</div></div>
+                <span class="text-green-600">✓</span>
+              </div>
+              <div class="flex items-center gap-4 p-3 bg-green-50 rounded-lg">
+                <div class="text-2xl">☀️</div>
+                <div class="flex-1"><div class="font-semibold">Almuerzo · Milanesa de pollo</div><div class="text-xs text-gray-500">650 kcal · $1.200 · ✅ Consumido</div></div>
+                <span class="text-green-600">✓</span>
+              </div>
+              <div class="flex items-center gap-4 p-3 bg-yellow-50 rounded-lg border-2 border-dashed border-yellow-300">
+                <div class="text-2xl">🌙</div>
+                <div class="flex-1"><div class="font-semibold">Cena · Wok de verduras con tofu</div><div class="text-xs text-gray-500">550 kcal · $770 · ⏳ Pendiente</div></div>
+                <button class="text-xs bg-green-600 text-white px-3 py-1 rounded-full">Marcar comido</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating button -->
+        <div class="fixed bottom-8 right-8 bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-2xl cursor-pointer hover:bg-green-700">+</div>
+      </div>
+    </div>
+    <div id="plan" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Plan Semanal con Budget</h2>
+      <p class="text-gray-500 mb-6">Vista calendario con costos por día y por comida</p>
+      <div class="web-frame p-6">
+        <!-- Header con budget -->
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h3 class="text-xl font-bold">Semana del 1 al 7 de mayo</h3>
+            <p class="text-sm text-gray-500">7 días · 21 comidas</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="border px-4 py-2 rounded-lg text-sm">← Anterior</button>
+            <button class="border px-4 py-2 rounded-lg text-sm">Siguiente →</button>
+            <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">⚡ Regenerar con IA</button>
+          </div>
+        </div>
+
+        <!-- Budget bar -->
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl p-6 mb-6">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-sm text-blue-100">Budget semanal</div>
+              <div class="text-3xl font-bold">$24.180 / $25.000</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-blue-100">Restante</div>
+              <div class="text-xl font-bold">$820 ✅</div>
+            </div>
+          </div>
+          <div class="h-3 bg-white/20 rounded-full overflow-hidden">
+            <div class="h-3 bg-white" style="width:96.7%"></div>
+          </div>
+          <div class="text-xs text-blue-100 mt-2">💡 Estás dentro del budget. ¡Buen laburo!</div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 flex gap-4 items-center flex-wrap">
+          <span class="text-sm font-semibold">Filtros:</span>
+          <select class="text-sm border rounded-lg px-3 py-1">
+            <option>⏱️ Tiempo cualquiera</option>
+            <option>< 30 min</option><option>30-60 min</option>
+          </select>
+          <select class="text-sm border rounded-lg px-3 py-1">
+            <option>🛒 Coto + Jumbo</option>
+          </select>
+          <span class="text-sm text-gray-500 ml-auto">Total estimado: <strong>$24.180</strong></span>
+        </div>
+
+        <!-- Calendario semanal -->
+        <div class="grid grid-cols-7 gap-3">
+          <!-- LUNES -->
+          <div class="bg-white border-2 border-green-500 rounded-xl p-3">
+            <div class="font-bold text-center mb-2">L<div class="text-xs text-green-600">📍 HOY</div></div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Tostadas + palta</div><div class="text-gray-500">450 kcal · $380</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Milanesa pollo</div><div class="text-gray-500">650 kcal · $1.200</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Wok verduras</div><div class="text-gray-500">550 kcal · $770</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2 text-green-600">$2.350</div>
+          </div>
+          <!-- MARTES -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">M</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Yogur + granola</div><div class="text-gray-500">420 kcal · $420</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Pollo al horno</div><div class="text-gray-500">680 kcal · $980</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Tortilla papa</div><div class="text-gray-500">520 kcal · $580</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2">$1.980</div>
+          </div>
+          <!-- MIERCOLES -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">M</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Avena + banana</div><div class="text-gray-500">380 kcal · $350</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Ensalada César</div><div class="text-gray-500">580 kcal · $1.350</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Pasta integral</div><div class="text-gray-500">620 kcal · $680</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2">$2.380</div>
+          </div>
+          <!-- JUEVES -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">J</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Smoothie verde</div><div class="text-gray-500">320 kcal · $400</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Salmón al limón</div><div class="text-gray-500">550 kcal · $1.800</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Sopa de verdura</div><div class="text-gray-500">420 kcal · $580</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2">$2.780</div>
+          </div>
+          <!-- VIERNES -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">V</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Huevos revueltos</div><div class="text-gray-500">450 kcal · $480</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Wraps pollo</div><div class="text-gray-500">620 kcal · $1.150</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Pizza casera</div><div class="text-gray-500">680 kcal · $980</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2">$2.610</div>
+          </div>
+          <!-- SABADO -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">S</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Tostado + café</div><div class="text-gray-500">380 kcal · $450</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Asado familiar</div><div class="text-gray-500">850 kcal · $2.500</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Sushi casero</div><div class="text-gray-500">580 kcal · $1.800</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2 text-orange-600">$4.750 ⚠️</div>
+          </div>
+          <!-- DOMINGO -->
+          <div class="bg-white border rounded-xl p-3">
+            <div class="font-bold text-center mb-2">D</div>
+            <div class="space-y-2 text-xs">
+              <div class="bg-orange-50 p-2 rounded"><div class="font-semibold">🌅 Pancakes</div><div class="text-gray-500">520 kcal · $580</div></div>
+              <div class="bg-yellow-50 p-2 rounded"><div class="font-semibold">☀️ Pollo grillado</div><div class="text-gray-500">620 kcal · $1.350</div></div>
+              <div class="bg-purple-50 p-2 rounded"><div class="font-semibold">🌙 Ensalada quinoa</div><div class="text-gray-500">450 kcal · $1.450</div></div>
+            </div>
+            <div class="text-center text-xs font-bold mt-2">$3.380</div>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
+          💡 <strong>Sugerencia IA:</strong> Cambiá "Salmón al limón" del jueves por "Merluza al limón" para ahorrar $900 sin perder calidad nutricional. <button class="text-blue-600 font-semibold ml-2">Aplicar cambio</button>
+        </div>
+      </div>
+    </div>
+    <div id="recipe" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Receta - Vista Detalle</h2>
+      <p class="text-gray-500 mb-6">Con checkbox de "comí esto" y alternativas</p>
+      <div class="web-frame">
+        <!-- Hero image -->
+        <div class="h-64 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-8xl">🍳</div>
+        <div class="p-6">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h2 class="text-2xl font-bold">Milanesa de pollo al horno</h2>
+              <p class="text-sm text-gray-500 mt-1">Almuerzo · Lunes 1 de mayo</p>
+            </div>
+            <button class="text-gray-400">💾 Guardar</button>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="bg-orange-50 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-orange-600">650</div>
+              <div class="text-xs text-gray-500">kcal</div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-blue-600">$1.200</div>
+              <div class="text-xs text-gray-500">costo</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-green-600">25min</div>
+              <div class="text-xs text-gray-500">tiempo</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-purple-600">35g</div>
+              <div class="text-xs text-gray-500">proteínas</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Ingredientes -->
+            <div>
+              <h3 class="font-bold mb-3 flex items-center justify-between">
+                Ingredientes
+                <span class="text-xs text-gray-500 font-normal">2 de 4 en heladera</span>
+              </h3>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                  <span class="text-sm">✅ Pechuga de pollo (200g)</span>
+                  <span class="text-xs text-gray-500">$580</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                  <span class="text-sm">✅ Pan rallado (50g)</span>
+                  <span class="text-xs text-gray-500">$220</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                  <span class="text-sm">🛒 Huevo (1 unidad)</span>
+                  <span class="text-xs text-gray-500">$180</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                  <span class="text-sm">🛒 Limón (1 unidad)</span>
+                  <span class="text-xs text-gray-500">$220</span>
+                </div>
+              </div>
+              <button class="w-full mt-3 bg-blue-100 text-blue-800 py-2 rounded-lg text-sm font-semibold">+ Agregar faltantes a lista de compras</button>
+            </div>
+
+            <!-- Pasos -->
+            <div>
+              <h3 class="font-bold mb-3">Preparación</h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex gap-3"><div class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">1</div><div>Cortá el pollo en filetes finos y salpimientá.</div></div>
+                <div class="flex gap-3"><div class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">2</div><div>Pasá por huevo batido y luego por pan rallado.</div></div>
+                <div class="flex gap-3"><div class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">3</div><div>Colocá en bandeja con papel manteca.</div></div>
+                <div class="flex gap-3"><div class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">4</div><div>Horneá 20 min a 200°C dándole vuelta a la mitad.</div></div>
+                <div class="flex gap-3"><div class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">5</div><div>Servir con rodajas de limón.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA: comiste esto? -->
+          <div class="mt-8 bg-gray-50 rounded-2xl p-6">
+            <h3 class="font-bold mb-4 text-center">¿Comiste esto? 🍽️</h3>
+            <div class="grid grid-cols-3 gap-3">
+              <button class="bg-green-600 text-white rounded-lg py-3 font-semibold">✅ Sí, lo comí</button>
+              <button class="bg-orange-100 text-orange-800 rounded-lg py-3 font-semibold">🔄 Comí algo diferente</button>
+              <button class="bg-gray-200 text-gray-700 rounded-lg py-3 font-semibold">⏭️ Saltar comida</button>
+            </div>
+          </div>
+
+          <!-- Alternativas -->
+          <div class="mt-6">
+            <h3 class="font-bold mb-3">¿No te convence? Alternativas similares</h3>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="border rounded-lg p-3 cursor-pointer hover:border-green-500">
+                <div class="text-3xl mb-1">🐟</div>
+                <div class="text-sm font-semibold">Merluza al limón</div>
+                <div class="text-xs text-gray-500">580 kcal · $1.500</div>
+              </div>
+              <div class="border rounded-lg p-3 cursor-pointer hover:border-green-500">
+                <div class="text-3xl mb-1">🥩</div>
+                <div class="text-sm font-semibold">Bife a la plancha</div>
+                <div class="text-xs text-gray-500">620 kcal · $1.800</div>
+              </div>
+              <div class="border rounded-lg p-3 cursor-pointer hover:border-green-500">
+                <div class="text-3xl mb-1">🍳</div>
+                <div class="text-sm font-semibold">Tortilla con verduras</div>
+                <div class="text-xs text-gray-500">540 kcal · $680</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="shopping" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Lista de Compras</h2>
+      <p class="text-gray-500 mb-6">Auto-generada desde el plan semanal con comparación de precios</p>
+      <div class="web-frame p-6">
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h3 class="text-xl font-bold">🛒 Compras semana del 1/5</h3>
+            <p class="text-sm text-gray-500">22 items · $14.180 estimado</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="border px-3 py-2 rounded-lg text-sm">📲 Enviar a WhatsApp</button>
+            <button class="border px-3 py-2 rounded-lg text-sm">📋 Copiar</button>
+            <button class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-semibold">🛒 Comprar online</button>
+          </div>
+        </div>
+
+        <!-- Comparación de supermercados -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="border-2 border-green-500 rounded-xl p-4 bg-green-50">
+            <div class="flex items-center gap-2 mb-1"><span class="text-lg">🏪</span><span class="font-bold">Coto</span><span class="ml-auto text-xs bg-green-600 text-white px-2 py-1 rounded-full">MÁS BARATO</span></div>
+            <div class="text-2xl font-bold text-green-700">$14.180</div>
+            <div class="text-xs text-gray-500">Compra online disponible</div>
+          </div>
+          <div class="border rounded-xl p-4">
+            <div class="flex items-center gap-2 mb-1"><span class="text-lg">🏪</span><span class="font-bold">Jumbo</span></div>
+            <div class="text-2xl font-bold text-gray-700">$15.620</div>
+            <div class="text-xs text-orange-600">+$1.440 vs Coto</div>
+          </div>
+          <div class="border rounded-xl p-4">
+            <div class="flex items-center gap-2 mb-1"><span class="text-lg">🏪</span><span class="font-bold">Carrefour</span></div>
+            <div class="text-2xl font-bold text-gray-700">$14.890</div>
+            <div class="text-xs text-orange-600">+$710 vs Coto</div>
+          </div>
+        </div>
+
+        <!-- Items por categoría -->
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-bold text-sm uppercase text-gray-500 mb-2">🥩 Carnes y proteínas · $8.500</h4>
+            <div class="bg-white border rounded-lg divide-y">
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Pechuga de pollo (1kg)</div><div class="text-xs text-gray-500">Coto · Lunes y miércoles</div></div><span class="text-sm font-semibold">$2.100</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3" checked><div class="flex-1"><div class="font-semibold text-sm line-through text-gray-400">Carne picada (500g)</div><div class="text-xs text-gray-500">Ya comprado</div></div><span class="text-sm font-semibold text-gray-400">$1.800</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Asado de tira (1.5kg)</div><div class="text-xs text-gray-500">Sábado · Asado</div></div><span class="text-sm font-semibold">$3.200</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Salmón fresco (300g)</div><div class="text-xs text-gray-500">Jueves</div></div><span class="text-sm font-semibold">$1.400</span></label>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm uppercase text-gray-500 mb-2">🥬 Verduras y frutas · $3.200</h4>
+            <div class="bg-white border rounded-lg divide-y">
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Tomate (1kg)</div></div><span class="text-sm font-semibold">$680</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Lechuga mantecosa</div></div><span class="text-sm font-semibold">$450</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Banana (1kg)</div></div><span class="text-sm font-semibold">$580</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Palta (3 unidades)</div></div><span class="text-sm font-semibold">$1.490</span></label>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm uppercase text-gray-500 mb-2">🍞 Almacén · $2.480</h4>
+            <div class="bg-white border rounded-lg divide-y">
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Pan integral</div></div><span class="text-sm font-semibold">$890</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Avena (500g)</div></div><span class="text-sm font-semibold">$580</span></label>
+              <label class="flex items-center p-3 cursor-pointer hover:bg-gray-50"><input type="checkbox" class="mr-3"><div class="flex-1"><div class="font-semibold text-sm">Pasta integral</div></div><span class="text-sm font-semibold">$1.010</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="social" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Social - Comunidad</h2>
+      <p class="text-gray-500 mb-6">Feed de recetas, retos grupales y compañeros</p>
+      <div class="web-frame p-6">
+        <!-- Tabs -->
+        <div class="flex gap-2 border-b mb-6">
+          <button class="px-4 py-2 border-b-2 border-green-500 text-green-600 font-semibold">📰 Feed</button>
+          <button class="px-4 py-2 text-gray-500">🏆 Retos</button>
+          <button class="px-4 py-2 text-gray-500">👥 Compañeros</button>
+          <button class="px-4 py-2 text-gray-500">🔍 Explorar</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Feed (col-span 2) -->
+          <div class="col-span-2 space-y-4">
+            <!-- Post 1 -->
+            <div class="border rounded-xl p-4 bg-white">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-pink-500 rounded-full text-white flex items-center justify-center font-bold">M</div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">María González</div>
+                  <div class="text-xs text-gray-500">Hace 2 horas · 🥇 Racha 23 días</div>
+                </div>
+                <button class="text-gray-400">···</button>
+              </div>
+              <p class="text-sm mb-3">Receta del día: milanesa de berenjena al horno 🍆 Quedó increíble! Recomiendo agregar parmesano arriba.</p>
+              <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg h-64 flex items-center justify-center text-7xl mb-3">🍆</div>
+              <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                <div class="bg-orange-50 rounded p-2 text-center"><div class="font-bold">320 kcal</div></div>
+                <div class="bg-blue-50 rounded p-2 text-center"><div class="font-bold">$850</div></div>
+                <div class="bg-green-50 rounded p-2 text-center"><div class="font-bold">25 min</div></div>
+              </div>
+              <div class="flex gap-4 text-sm border-t pt-3">
+                <button class="flex items-center gap-1 text-gray-500 hover:text-red-500">❤️ 234</button>
+                <button class="flex items-center gap-1 text-gray-500">💬 18</button>
+                <button class="flex items-center gap-1 text-gray-500">💾 Guardar</button>
+                <button class="ml-auto bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">👨‍🍳 Cocinar esto</button>
+              </div>
+            </div>
+
+            <!-- Post 2 (achievement) -->
+            <div class="border rounded-xl p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-blue-500 rounded-full text-white flex items-center justify-center font-bold">F</div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">Federico Pérez</div>
+                  <div class="text-xs text-gray-500">Hace 5 horas</div>
+                </div>
+              </div>
+              <div class="text-center py-6">
+                <div class="text-6xl mb-2">🏆</div>
+                <div class="font-bold text-lg">¡30 días seguidos cumpliendo el plan!</div>
+                <div class="text-sm text-gray-600 mt-1">Y se nota: -3.5kg desde que empecé 💪</div>
+              </div>
+              <div class="flex gap-4 text-sm border-t pt-3">
+                <button class="text-gray-500">❤️ 89</button>
+                <button class="text-gray-500">🎉 45</button>
+                <button class="text-gray-500">💬 12 felicitaciones</button>
+              </div>
+            </div>
+
+            <!-- Post 3 -->
+            <div class="border rounded-xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-green-500 rounded-full text-white flex items-center justify-center font-bold">L</div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">Lucas Martínez</div>
+                  <div class="text-xs text-gray-500">Ayer · 💰 Budget master</div>
+                </div>
+              </div>
+              <p class="text-sm mb-3">Cómo cocino toda la semana por menos de $18.000 (incluyendo cenas con la familia) 🇦🇷👇</p>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                <div class="font-bold mb-1">📋 Plan compartido</div>
+                <div class="text-xs text-gray-600">7 días · 21 comidas · $17.890 total</div>
+                <button class="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded-full">Importar a mi plan</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar derecha -->
+          <div class="space-y-4">
+            <!-- Reto activo -->
+            <div class="border rounded-xl p-4 bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+              <div class="text-xs uppercase tracking-wide mb-1">🏆 Reto activo</div>
+              <div class="font-bold mb-2">Mayo sin azúcar agregada</div>
+              <div class="text-sm mb-3">Día 8 de 30</div>
+              <div class="h-2 bg-white/20 rounded-full mb-3"><div class="h-2 bg-white rounded-full" style="width:27%"></div></div>
+              <div class="text-xs">+1.234 personas participando</div>
+            </div>
+
+            <!-- Compañeros -->
+            <div class="border rounded-xl p-4">
+              <div class="font-bold mb-3 text-sm">👥 Tus compañeros</div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-pink-500 rounded-full"></div>
+                  <div class="flex-1 text-sm">María G.</div>
+                  <span class="text-xs text-green-600">🔥 23</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-blue-500 rounded-full"></div>
+                  <div class="flex-1 text-sm">Federico P.</div>
+                  <span class="text-xs text-green-600">🔥 30</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-green-500 rounded-full"></div>
+                  <div class="flex-1 text-sm">Lucas M.</div>
+                  <span class="text-xs text-green-600">🔥 12</span>
+                </div>
+              </div>
+              <button class="mt-3 w-full text-xs text-blue-600 font-semibold">+ Invitar amigos</button>
+            </div>
+
+            <!-- Tags trending -->
+            <div class="border rounded-xl p-4">
+              <div class="font-bold mb-3 text-sm">🔥 Trending</div>
+              <div class="flex flex-wrap gap-2">
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">#sinazucar</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">#bajocosto</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">#mealprep</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">#asado</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">#vegetariano</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="progress" class="screen">
+      <h2 class="text-2xl font-bold mb-1">Progreso</h2>
+      <p class="text-gray-500 mb-6">Tracking de peso, racha y gasto mensual</p>
+      <div class="web-frame p-6">
+        <h3 class="text-xl font-bold mb-6">Tu progreso</h3>
+
+        <!-- Stats principales -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4">
+            <div class="text-xs text-green-100 mb-1">Peso actual</div>
+            <div class="text-3xl font-bold">78.5 kg</div>
+            <div class="text-xs text-green-100 mt-1">↓ 3.5kg en 30 días</div>
+          </div>
+          <div class="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl p-4">
+            <div class="text-xs text-orange-100 mb-1">Racha actual</div>
+            <div class="text-3xl font-bold">🔥 12 días</div>
+            <div class="text-xs text-orange-100 mt-1">Mejor: 18 días</div>
+          </div>
+          <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl p-4">
+            <div class="text-xs text-blue-100 mb-1">Gasto del mes</div>
+            <div class="text-3xl font-bold">$87.450</div>
+            <div class="text-xs text-blue-100 mt-1">de $100.000 budget</div>
+          </div>
+          <div class="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl p-4">
+            <div class="text-xs text-purple-100 mb-1">Plan cumplido</div>
+            <div class="text-3xl font-bold">87%</div>
+            <div class="text-xs text-purple-100 mt-1">26 / 30 días</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Gráfico peso -->
+          <div class="border rounded-xl p-6">
+            <h4 class="font-bold mb-4">📉 Evolución del peso</h4>
+            <svg viewBox="0 0 400 200" class="w-full">
+              <line x1="0" y1="50" x2="400" y2="50" stroke="#e5e7eb" stroke-dasharray="4"/>
+              <line x1="0" y1="100" x2="400" y2="100" stroke="#e5e7eb" stroke-dasharray="4"/>
+              <line x1="0" y1="150" x2="400" y2="150" stroke="#e5e7eb" stroke-dasharray="4"/>
+              <polyline points="20,40 70,55 120,70 170,85 220,95 270,110 320,130 370,160" fill="none" stroke="#10b981" stroke-width="3"/>
+              <circle cx="20" cy="40" r="5" fill="#10b981"/>
+              <circle cx="70" cy="55" r="5" fill="#10b981"/>
+              <circle cx="120" cy="70" r="5" fill="#10b981"/>
+              <circle cx="170" cy="85" r="5" fill="#10b981"/>
+              <circle cx="220" cy="95" r="5" fill="#10b981"/>
+              <circle cx="270" cy="110" r="5" fill="#10b981"/>
+              <circle cx="320" cy="130" r="5" fill="#10b981"/>
+              <circle cx="370" cy="160" r="6" fill="#059669" stroke="white" stroke-width="2"/>
+              <text x="370" y="180" text-anchor="middle" font-size="10" fill="#059669" font-weight="bold">78.5kg</text>
+              <text x="20" y="30" text-anchor="middle" font-size="10" fill="#6b7280">82kg</text>
+            </svg>
+            <div class="text-xs text-gray-500 text-center mt-2">Últimos 30 días</div>
+          </div>
+
+          <!-- Gasto mensual -->
+          <div class="border rounded-xl p-6">
+            <h4 class="font-bold mb-4">💰 Gasto por categoría</h4>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🥩 Carnes</span><span class="font-semibold">$32.180</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-red-500 rounded-full" style="width:37%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🥬 Verduras</span><span class="font-semibold">$18.450</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-green-500 rounded-full" style="width:21%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🍞 Almacén</span><span class="font-semibold">$15.820</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-yellow-500 rounded-full" style="width:18%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🥛 Lácteos</span><span class="font-semibold">$12.340</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-blue-500 rounded-full" style="width:14%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🍎 Frutas</span><span class="font-semibold">$8.660</span></div>
+                <div class="h-2 bg-gray-200 rounded-full"><div class="h-2 bg-pink-500 rounded-full" style="width:10%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logros -->
+        <div class="mt-6 border rounded-xl p-6">
+          <h4 class="font-bold mb-4">🏆 Logros desbloqueados</h4>
+          <div class="grid grid-cols-6 gap-3">
+            <div class="text-center p-3 bg-yellow-50 rounded-lg"><div class="text-3xl mb-1">🥇</div><div class="text-xs font-semibold">Primera semana</div></div>
+            <div class="text-center p-3 bg-yellow-50 rounded-lg"><div class="text-3xl mb-1">🔥</div><div class="text-xs font-semibold">Racha 7 días</div></div>
+            <div class="text-center p-3 bg-yellow-50 rounded-lg"><div class="text-3xl mb-1">💰</div><div class="text-xs font-semibold">Bajo budget</div></div>
+            <div class="text-center p-3 bg-yellow-50 rounded-lg"><div class="text-3xl mb-1">🥗</div><div class="text-xs font-semibold">10 recetas</div></div>
+            <div class="text-center p-3 bg-gray-100 rounded-lg opacity-40"><div class="text-3xl mb-1">🏔️</div><div class="text-xs font-semibold">Racha 30</div></div>
+            <div class="text-center p-3 bg-gray-100 rounded-lg opacity-40"><div class="text-3xl mb-1">💎</div><div class="text-xs font-semibold">100 recetas</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="whatsapp" class="screen">
+      <h2 class="text-2xl font-bold mb-1">WhatsApp Bot</h2>
+      <p class="text-gray-500 mb-6">El "compañero diario" - donde sucede el 80% del uso</p>
+
+      <div class="phone">
+        <div class="phone-content">
+          <!-- Header WhatsApp -->
+          <div class="bg-green-700 text-white px-3 py-2 flex items-center gap-3">
+            <span>←</span>
+            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-lg">🥗</div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm">NutriPlan</div>
+              <div class="text-xs text-green-200">en línea</div>
+            </div>
+            <span>📞</span>
+            <span>⋮</span>
+          </div>
+
+          <!-- Chat -->
+          <div class="bg-[#e5ddd5] p-3 space-y-2" style="min-height: 600px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%221%22 fill=%22%23d4ccc1%22/></svg>')">
+
+            <div class="text-center text-xs text-gray-600 my-2"><span class="bg-white/80 rounded-full px-3 py-1">HOY</span></div>
+
+            <div class="wa-bubble-in">
+              <p class="text-sm">¡Buen día Juan! 🌅 ¿Qué desayunaste?</p>
+              <p class="text-xs text-gray-400 mt-1 text-right">8:15</p>
+            </div>
+
+            <div class="wa-bubble-out">
+              <p class="text-sm">tostadas con palta y café</p>
+              <p class="text-xs text-gray-500 mt-1 text-right">8:32 ✓✓</p>
+            </div>
+
+            <div class="wa-bubble-in">
+              <p class="text-sm">✅ Anotado!</p>
+              <p class="text-sm mt-1">🥑 Tostadas + palta + café</p>
+              <p class="text-sm">📊 450 kcal · $380</p>
+              <p class="text-sm mt-1 text-gray-600">Te quedan 1.550 kcal hoy 💪</p>
+              <div class="flex gap-1 mt-2">
+                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Ver detalles</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">Editar</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1 text-right">8:32</p>
+            </div>
+
+            <div class="text-center text-xs text-gray-600 my-2"><span class="bg-white/80 rounded-full px-3 py-1">12:30</span></div>
+
+            <div class="wa-bubble-out">
+              <div class="bg-gray-200 rounded-lg h-32 flex items-center justify-center text-5xl mb-1">🍝</div>
+              <p class="text-xs text-gray-500 text-right">12:30 ✓✓</p>
+            </div>
+
+            <div class="wa-bubble-in">
+              <p class="text-sm">📷 Veo: pasta con tomate y queso</p>
+              <p class="text-sm mt-1">Estimo ~580 kcal · $850</p>
+              <p class="text-sm mt-1 text-gray-600">¿Está bien?</p>
+              <div class="flex gap-1 mt-2 flex-wrap">
+                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">✅ Sí, registrar</span>
+                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">✏️ Ajustar</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">❌ No es eso</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1 text-right">12:30</p>
+            </div>
+
+            <div class="wa-bubble-out">
+              <p class="text-sm">qué cocino esta noche?</p>
+              <p class="text-xs text-gray-500 text-right">19:45 ✓✓</p>
+            </div>
+
+            <div class="wa-bubble-in">
+              <p class="text-sm font-semibold">🌙 En tu plan: Wok de verduras con tofu</p>
+              <p class="text-sm mt-1">⏱️ 25 min · 550 kcal · $770</p>
+              <p class="text-sm mt-1 text-gray-600">Tenés todos los ingredientes 🎉</p>
+              <div class="flex gap-1 mt-2 flex-wrap">
+                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">📖 Ver receta</span>
+                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">🔄 Otra opción</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1 text-right">19:45</p>
+            </div>
+
+            <div class="wa-bubble-out">
+              <p class="text-sm">/budget</p>
+              <p class="text-xs text-gray-500 text-right">19:46 ✓✓</p>
+            </div>
+
+            <div class="wa-bubble-in">
+              <p class="text-sm font-semibold">💰 Budget de la semana</p>
+              <p class="text-sm mt-1">Gastado: $14.180</p>
+              <p class="text-sm">Restante: $10.820 / $25.000</p>
+              <p class="text-sm mt-1 text-green-700">✅ Vas excelente</p>
+              <p class="text-xs text-gray-400 mt-1 text-right">19:46</p>
+            </div>
+
+          </div>
+
+          <!-- Input -->
+          <div class="bg-gray-100 p-2 flex items-center gap-2">
+            <span class="text-xl">😊</span>
+            <input type="text" placeholder="Mensaje" class="flex-1 bg-white rounded-full px-4 py-2 text-sm">
+            <span class="text-xl">📎</span>
+            <span class="text-xl">📷</span>
+            <div class="bg-green-600 w-10 h-10 rounded-full flex items-center justify-center text-white">🎤</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-md mx-auto mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+        <p class="font-bold mb-2">💡 Comandos disponibles</p>
+        <ul class="text-xs space-y-1 text-gray-700">
+          <li><code class="bg-white px-1 rounded">/hoy</code> - resumen del día</li>
+          <li><code class="bg-white px-1 rounded">/plan</code> - próxima comida</li>
+          <li><code class="bg-white px-1 rounded">/lista</code> - lista de compras</li>
+          <li><code class="bg-white px-1 rounded">/budget</code> - cuánto gastaste</li>
+          <li><code class="bg-white px-1 rounded">/peso 78.5</code> - registrar peso</li>
+          <li><code class="bg-white px-1 rounded">/agua</code> - +250ml de agua</li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.target.classList.add('active');
+}
+// Mark first as active
+document.querySelector('.nav-item').classList.add('active');
+</script>
+
+</body>
+</html>
