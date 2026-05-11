@@ -34,7 +34,9 @@ router.post('/:id/save', async (req, res, next) => {
 
 router.get('/saved', async (req, res, next) => {
   try {
-    const recipes = await recipesService.getSavedRecipes(req.user!.id);
+    const raw = req.query.q;
+    const q = typeof raw === 'string' ? raw.trim().slice(0, 200) : undefined;
+    const recipes = await recipesService.getSavedRecipes(req.user!.id, q || undefined);
     res.json({ recipes });
   } catch (err) {
     next(err);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, API_URL } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
@@ -23,16 +23,29 @@ export default function RecipesPage() {
   const [mealDate, setMealDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [mealPortions, setMealPortions] = useState(1);
   const [mealLogSuccess, setMealLogSuccess] = useState<string | null>(null);
+  const [savedRecipesSearch, setSavedRecipesSearch] = useState('');
+  const [debouncedSavedSearch, setDebouncedSavedSearch] = useState('');
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setDebouncedSavedSearch(savedRecipesSearch);
+    }, 2000);
+    return () => window.clearTimeout(id);
+  }, [savedRecipesSearch]);
 
   const { data: inventoryData } = useQuery<{ items: InventoryItem[] }>({
     queryKey: ['inventory'],
     queryFn: () => apiFetch('/inventory'),
   });
 
-  const { data: savedData } = useQuery<{ recipes: Recipe[] }>({
-    queryKey: ['saved-recipes'],
-    queryFn: () => apiFetch('/recipes/saved'),
+  const savedSearch = debouncedSavedSearch.trim();
+  const { data: savedData, isFetching: savedRecipesFetching } = useQuery<{ recipes: Recipe[] }>({
+    queryKey: ['saved-recipes', savedSearch],
+    queryFn: () =>
+      savedSearch
+        ? apiFetch(`/recipes/saved?q=${encodeURIComponent(savedSearch)}`)
+        : apiFetch('/recipes/saved'),
   });
 
   const saveMutation = useMutation({
@@ -158,6 +171,12 @@ export default function RecipesPage() {
 
   const inventory = inventoryData?.items ?? [];
   const savedRecipes = savedData?.recipes ?? [];
+  const pendingSearchInput = savedRecipesSearch.trim().length > 0;
+  const savedRecipesSearchDebouncing = savedRecipesSearch !== debouncedSavedSearch;
+  const savedRecipesSearchLoading = savedRecipesSearchDebouncing || savedRecipesFetching;
+  const showSavedSection =
+    savedData !== undefined &&
+    (pendingSearchInput || savedSearch.length > 0 || savedRecipes.length > 0);
 
   return (
     <div className="p-8">
@@ -426,9 +445,47 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      {savedRecipes.length > 0 && (
+      {showSavedSection && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recetas guardadas</h2>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Recetas guardadas</h2>
+            <div className="w-full sm:max-w-xs">
+              <label htmlFor="saved-recipes-search" className="text-sm font-medium text-gray-700 mb-1 block">
+                Buscar por nombre
+              </label>
+              <input
+                id="saved-recipes-search"
+                type="search"
+                value={savedRecipesSearch}
+                onChange={(e) => setSavedRecipesSearch(e.target.value)}
+                placeholder="Ej: pasta, ensalada…"
+                autoComplete="off"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+              />
+              {savedRecipesSearchLoading && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500" aria-live="polite">
+                  <div
+                    className="w-4 h-4 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin shrink-0"
+                    aria-hidden
+                  />
+                  <span>
+                    {savedRecipesSearchDebouncing
+                      ? ''
+                      : ''}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          {savedRecipes.length === 0 ? (
+            <p className="text-sm text-gray-500 py-6">
+              {savedSearch
+                ? 'No hay recetas que coincidan con tu búsqueda.'
+                : pendingSearchInput
+                  ? 'La búsqueda se actualiza 2 segundos después de que dejes de escribir.'
+                  : 'No tenés recetas guardadas todavía.'}
+            </p>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {savedRecipes.map((recipe) => {
               const isActive = displayedRecipe && 'id' in displayedRecipe && displayedRecipe.id === recipe.id;
@@ -461,6 +518,7 @@ export default function RecipesPage() {
               );
             })}
           </div>
+          )}
         </div>
       )}
     </div>

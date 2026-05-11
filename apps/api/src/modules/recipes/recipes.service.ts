@@ -104,9 +104,14 @@ export async function saveRecipe(userId: string, recipeId: string) {
   return prisma.recipe.update({ where: { id: recipeId }, data: { isSaved: true } });
 }
 
-export async function getSavedRecipes(userId: string) {
+export async function getSavedRecipes(userId: string, nameSearch?: string) {
+  const q = nameSearch?.trim();
   return prisma.recipe.findMany({
-    where: { userId, isSaved: true },
+    where: {
+      userId,
+      isSaved: true,
+      ...(q ? { name: { contains: q, mode: 'insensitive' } } : {}),
+    },
     orderBy: { generatedAt: 'desc' },
   });
 }

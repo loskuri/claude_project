@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:api-web": "node dev-api-web.mjs",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "db:migrate": "turbo run db:migrate --filter=api",

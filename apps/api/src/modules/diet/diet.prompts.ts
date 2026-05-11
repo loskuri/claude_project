@@ -32,8 +32,14 @@ export function buildDietPlanPrompt(
   const mealsPerDay = preferences?.mealsPerDay ?? 4;
   const mealTypes = getMealTypes(mealsPerDay);
   const mealTypeLabels = mealTypes.map((t) => `${MEAL_TYPE_LABELS[t]} (${t})`).join(', ');
-  const allergies = preferences?.allergies?.join(', ') || 'ninguna';
-  const disliked = preferences?.dislikedFoods?.join(', ') || 'ninguno';
+  const allergiesList = (preferences?.allergies ?? []).filter((a) => a.trim());
+  const allergies = allergiesList.length ? allergiesList.join(', ') : 'ninguna declarada';
+  const dislikedList = (preferences?.dislikedFoods ?? []).filter((f) => f.trim());
+  const disliked = dislikedList.length ? dislikedList.join(', ') : 'ninguno declarado';
+  const cuisinesList = (preferences?.preferredCuisines ?? []).filter((c) => c.trim());
+  const preferredCuisines = cuisinesList.length
+    ? cuisinesList.join(', ')
+    : 'sin preferencias de cocina indicadas';
   const dietaryType = preferences?.dietaryType ?? 'OMNIVORE';
 
   const weekDays = DAY_NAMES_ES.slice(0, days).map((name, i) => {
@@ -43,22 +49,27 @@ export function buildDietPlanPrompt(
   });
 
   return `Generá un plan de alimentación de ${days} día${days > 1 ? 's' : ''} para:
+
+PERFIL:
 - Sexo: ${profile.sex === 'MALE' ? 'Masculino' : 'Femenino'}, Edad: ${ageYears} años
 - Altura: ${profile.heightCm}cm, Peso: ${profile.weightKg}kg
-- Objetivo: ${profile.goal}
-- Tipo de dieta: ${dietaryType}
+- Objetivo nutricional: ${profile.goal}
 - Nivel de actividad: ${profile.activityLevel}
+
+PREFERENCIAS ALIMENTARIAS (del usuario):
+- Tipo de dieta: ${dietaryType}
+- Cocinas o estilos preferidos (orientar el menú hacia ellos cuando sea compatible con el resto): ${preferredCuisines}
+- Comidas por día: ${mealsPerDay} (${mealTypeLabels})
+
+RESTRICCIONES (obligatorio cumplir; no incluir alérgenos ni alimentos rechazados):
+- Alergias: ${allergies}
+- Alimentos a evitar / que no le gustan (no usar como ingredientes ni como plato principal): ${disliked}
 
 OBJETIVOS NUTRICIONALES DIARIOS:
 - Calorías: ${targets.calories} kcal
 - Proteínas: ${targets.proteinG}g
 - Carbohidratos: ${targets.carbsG}g
 - Grasas: ${targets.fatG}g
-
-RESTRICCIONES:
-- Alergias: ${allergies}
-- Alimentos a evitar: ${disliked}
-- Comidas por día: ${mealsPerDay} (${mealTypeLabels})
 
 SEMANA DEL: ${weekDays[0]}${days > 1 ? ` al ${weekDays[days - 1]}` : ''}
 
