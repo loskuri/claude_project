@@ -17,11 +17,22 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
+  const devCorsOrigins = [
+    'http://localhost:3000',
+    'http://localhost:4003',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:4003',
+    'http://localhost:8081',
+    'http://localhost:19006',
+    ...(process.env.ALLOWED_ORIGINS?.split(',') ?? [])
+      .map((o) => o.trim())
+      .filter(Boolean),
+  ];
+  const prodCorsOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
+
   app.use(
     cors({
-      origin: process.env.NODE_ENV === 'production'
-        ? process.env.ALLOWED_ORIGINS?.split(',')
-        : ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:19006'],
+      origin: process.env.NODE_ENV === 'production' ? prodCorsOrigins : devCorsOrigins,
       credentials: true,
     }),
   );
