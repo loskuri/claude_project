@@ -50,6 +50,19 @@ router.get('/', async (req, res, next) => {
 router.get('/history', async (req, res, next) => {
   try {
     const { from, to } = req.query as { from?: string; to?: string };
+    const isoDay = /^\d{4}-\d{2}-\d{2}$/;
+    if (from !== undefined && (typeof from !== 'string' || !isoDay.test(from))) {
+      res.status(400).json({ error: 'El parámetro from debe ser YYYY-MM-DD' });
+      return;
+    }
+    if (to !== undefined && (typeof to !== 'string' || !isoDay.test(to))) {
+      res.status(400).json({ error: 'El parámetro to debe ser YYYY-MM-DD' });
+      return;
+    }
+    if (from && to && from > to) {
+      res.status(400).json({ error: 'from no puede ser posterior a to' });
+      return;
+    }
     const history = await mealLogsService.getMacroHistory(req.user!.id, from, to);
     res.json({ history });
   } catch (err) {

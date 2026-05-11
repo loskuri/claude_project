@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, apiStream, ApiError } from '@/lib/api-client';
 import type { NutritionPlan, Meal, NutritionTargets } from '@nutriplan/shared';
 
@@ -54,6 +54,13 @@ function getUTCDateAtOffset(offset: number): Date {
 
 function toDateStr(d: Date): string {
   return d.toISOString().split('T')[0];
+}
+
+/** e.g. "Lunes 24/5" (UTC, es-AR weekday) */
+function formatWeekdayDayMonth(d: Date): string {
+  const weekday = d.toLocaleDateString('es-AR', { weekday: 'long', timeZone: 'UTC' });
+  const cap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${cap} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -276,7 +283,8 @@ function MealLogItem({
 
 export default function MenuPage() {
   const qc = useQueryClient();
-  const [dateOffset, setDateOffset] = useState(0);
+  const [dateOffset, setDateOffsetState] = useState(0);
+  const setDateOffset = (n: number) => setDateOffsetState(Math.max(0, Math.min(6, n)));
   const [logModal, setLogModal] = useState<{ meal: Meal; isEdit: boolean } | null>(null);
   const [customMealModal, setCustomMealModal] = useState(false);
   const [customMealError, setCustomMealError] = useState<string | null>(null);
@@ -301,20 +309,31 @@ export default function MenuPage() {
   const canGenerate = dateOffset >= 0 && dateOffset <= 6; // allow only today + next 6 days
   const isBusy = isGenerating || isWeekGenerating;
 
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = getUTCDateAtOffset(i);
+    return { offset: i, date: d, dateStr: toDateStr(d) };
+  });
+
   // ─── Queries ──────────────────────────────────────────────────────────────
 
-  const { data: plan, isLoading: isPlanLoading } = useQuery<NutritionPlan | null>({
-    queryKey: ['diet-by-date', dateStr],
-    queryFn: async () => {
-      try {
-        return await apiFetch<NutritionPlan>(`/diet/by-date/${dateStr}`);
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 404) return null;
-        throw err;
-      }
-    },
-    retry: false,
+  const weekPlanQueries = useQueries({
+    queries: weekDays.map(({ dateStr: ds }) => ({
+      queryKey: ['diet-by-date', ds] as const,
+      queryFn: async (): Promise<NutritionPlan | null> => {
+        try {
+          return await apiFetch<NutritionPlan>(`/diet/by-date/${ds}`);
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 404) return null;
+          throw err;
+        }
+      },
+      retry: false,
+    })),
   });
+
+  const planQuery = weekPlanQueries[dateOffset];
+  const plan = planQuery?.data ?? null;
+  const isPlanLoading = planQuery?.isLoading ?? true;
 
   const { data: dayLogs } = useQuery<DailySummary>({
     queryKey: ['meal-logs', dateStr],
@@ -459,10 +478,6 @@ export default function MenuPage() {
     }
   }
 
-  const dayLabel = selectedDate.toLocaleDateString('es-AR', {
-    weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
-  });
-
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -517,33 +532,42 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Date navigation */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => setDateOffset((o) => o - 1)}
-          className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-gray-600"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="flex-1 text-center">
-          <div className="font-semibold text-gray-900 capitalize">{dayLabel}</div>
-          {isToday && <span className="text-xs text-brand-600 font-medium">Hoy</span>}
+      {/* Week day strip: hoy … +6 días */}
+      <div className="mb-6">
+        <p className="text-xs text-gray-500 mb-2 font-medium">Elegí el día</p>
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-7 snap-x snap-mandatory">
+          {weekDays.map(({ offset, date, dateStr: ds }, i) => {
+            const q = weekPlanQueries[i];
+            const isSelected = dateOffset === offset;
+            const hasPlan = q?.data != null;
+            const loading = q?.isLoading ?? true;
+            return (
+              <button
+                key={ds}
+                type="button"
+                onClick={() => setDateOffset(offset)}
+                className={`
+                  snap-start shrink-0 w-[4.75rem] sm:w-auto min-h-[4.25rem] sm:min-h-0
+                  flex flex-col items-center justify-center rounded-xl border-2 px-1.5 py-2 sm:py-2.5
+                  transition text-center
+                  ${isSelected
+                    ? 'border-brand-500 bg-brand-50 shadow-sm ring-1 ring-brand-200'
+                    : 'border-gray-200 bg-white hover:border-brand-200 hover:bg-gray-50'}
+                `}
+              >
+                <span className={`text-[10px] sm:text-xs font-semibold leading-tight ${isSelected ? 'text-brand-900' : 'text-gray-900'}`}>
+                  {formatWeekdayDayMonth(date)}
+                </span>
+                <span className={`text-[9px] sm:text-[10px] font-semibold mt-0.5 h-3.5 flex items-center justify-center ${offset === 0 ? 'text-brand-600' : 'invisible'}`} aria-hidden={offset !== 0}>
+                  Hoy
+                </span>
+                <span className={`mt-1 text-[9px] sm:text-[10px] font-medium leading-none ${loading ? 'text-gray-400' : hasPlan ? 'text-green-600' : 'text-gray-400'}`}>
+                  {loading ? '…' : hasPlan ? 'Con plan' : 'Sin plan'}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <button
-          onClick={() => setDateOffset((o) => o + 1)}
-          className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition text-gray-600"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        {!isToday && (
-          <button onClick={() => setDateOffset(0)} className="text-xs font-medium text-brand-600 px-3 py-1.5 border border-brand-200 rounded-lg hover:bg-brand-50 transition">
-            Hoy
-          </button>
-        )}
       </div>
 
       {/* Week generation progress */}

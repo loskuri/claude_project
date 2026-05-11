@@ -6,8 +6,21 @@ import { apiFetch } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 import type { Sex, ActivityLevel, NutritionGoal, DietaryType } from '@nutriplan/shared';
 import { ACTIVITY_LABELS, GOAL_LABELS } from '@nutriplan/shared';
+import {
+  COMMON_ALLERGIES,
+  COMMON_CUISINES,
+  COMMON_DISLIKED_FOODS,
+  chipLabels,
+} from '@/lib/food-preference-options';
+import { PreferenceChipGrid } from '@/components/preference-chip-grid';
 
-const STEPS = ['Datos personales', 'Objetivo', 'Preferencias', 'Alergias'];
+const STEPS = [
+  'Datos personales',
+  'Objetivo',
+  'Preferencias',
+  'Alergias',
+  'Gustos y cocinas',
+];
 
 interface ProfileData {
   firstName: string;
@@ -31,7 +44,10 @@ interface AllergyData {
   allergies: string[];
 }
 
-const COMMON_ALLERGIES = ['Gluten', 'Lactosa', 'Maní', 'Nueces', 'Huevo', 'Soja', 'Mariscos', 'Pescado'];
+interface TasteData {
+  dislikedFoods: string[];
+  preferredCuisines: string[];
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -51,12 +67,31 @@ export default function OnboardingPage() {
   const [goal, setGoal] = useState<GoalData>({ goal: 'LOSE_WEIGHT' });
   const [prefs, setPrefs] = useState<PrefData>({ dietaryType: 'OMNIVORE', mealsPerDay: 4 });
   const [allergies, setAllergies] = useState<AllergyData>({ allergies: [] });
+  const [tastes, setTastes] = useState<TasteData>({ dislikedFoods: [], preferredCuisines: [] });
 
   function toggleAllergy(a: string) {
     setAllergies((prev) => ({
       allergies: prev.allergies.includes(a)
         ? prev.allergies.filter((x) => x !== a)
         : [...prev.allergies, a],
+    }));
+  }
+
+  function toggleDisliked(label: string) {
+    setTastes((prev) => ({
+      ...prev,
+      dislikedFoods: prev.dislikedFoods.includes(label)
+        ? prev.dislikedFoods.filter((x) => x !== label)
+        : [...prev.dislikedFoods, label],
+    }));
+  }
+
+  function toggleCuisine(label: string) {
+    setTastes((prev) => ({
+      ...prev,
+      preferredCuisines: prev.preferredCuisines.includes(label)
+        ? prev.preferredCuisines.filter((x) => x !== label)
+        : [...prev.preferredCuisines, label],
     }));
   }
 
@@ -74,7 +109,12 @@ export default function OnboardingPage() {
       });
       await apiFetch('/users/me/preferences', {
         method: 'PUT',
-        body: JSON.stringify({ ...prefs, ...allergies }),
+        body: JSON.stringify({
+          ...prefs,
+          ...allergies,
+          dislikedFoods: tastes.dislikedFoods,
+          preferredCuisines: tastes.preferredCuisines,
+        }),
       });
       if (user && accessToken && refreshToken) {
         setAuth({ ...user, onboardingComplete: true }, accessToken, refreshToken);
@@ -86,6 +126,10 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   }
+
+  const allergyChipLabels = chipLabels(COMMON_ALLERGIES, allergies.allergies);
+  const dislikedChipLabels = chipLabels(COMMON_DISLIKED_FOODS, tastes.dislikedFoods);
+  const cuisineChipLabels = chipLabels(COMMON_CUISINES, tastes.preferredCuisines);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-white flex items-center justify-center p-4">
@@ -149,7 +193,7 @@ export default function OnboardingPage() {
               <h2 className="text-xl font-bold text-gray-900">¿Cuál es tu objetivo?</h2>
               <div className="space-y-3">
                 {(Object.entries(GOAL_LABELS) as [NutritionGoal, string][]).map(([k, v]) => (
-                  <button key={k} onClick={() => setGoal({ goal: k })} className={`w-full px-5 py-4 rounded-xl border-2 text-left font-medium transition ${goal.goal === k ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-700 hover:border-brand-200'}`}>
+                  <button key={k} type="button" onClick={() => setGoal({ goal: k })} className={`w-full px-5 py-4 rounded-xl border-2 text-left font-medium transition ${goal.goal === k ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-700 hover:border-brand-200'}`}>
                     {v}
                   </button>
                 ))}
@@ -174,8 +218,8 @@ export default function OnboardingPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Comidas por día</label>
                 <div className="flex gap-3">
-                  {[3, 4, 5].map((n) => (
-                    <button key={n} onClick={() => setPrefs(p => ({ ...p, mealsPerDay: n }))} className={`flex-1 py-3 rounded-xl border-2 font-semibold transition ${prefs.mealsPerDay === n ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-700'}`}>
+                  {[3, 4, 5, 6].map((n) => (
+                    <button key={n} type="button" onClick={() => setPrefs(p => ({ ...p, mealsPerDay: n }))} className={`flex-1 py-3 rounded-xl border-2 font-semibold transition ${prefs.mealsPerDay === n ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-700'}`}>
                       {n}
                     </button>
                   ))}
@@ -188,12 +232,33 @@ export default function OnboardingPage() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-gray-900">Alergias e intolerancias</h2>
               <p className="text-gray-500 text-sm">Seleccioná todo lo que aplica (podés saltear si no tenés ninguna)</p>
-              <div className="flex flex-wrap gap-2">
-                {COMMON_ALLERGIES.map((a) => (
-                  <button key={a} onClick={() => toggleAllergy(a)} className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition ${allergies.allergies.includes(a) ? 'border-brand-600 bg-brand-100 text-brand-700' : 'border-gray-200 text-gray-600 hover:border-brand-200'}`}>
-                    {a}
-                  </button>
-                ))}
+              <PreferenceChipGrid
+                labels={allergyChipLabels}
+                selected={allergies.allergies}
+                onToggle={toggleAllergy}
+              />
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-900">Alimentos o sabores que preferís evitar</h2>
+                <p className="text-gray-500 text-sm">Elegí lo que no te gusta o preferís no ver en tu menú (opcional)</p>
+                <PreferenceChipGrid
+                  labels={dislikedChipLabels}
+                  selected={tastes.dislikedFoods}
+                  onToggle={toggleDisliked}
+                />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-900">Cocinas que más te gustan</h2>
+                <p className="text-gray-500 text-sm">Así podemos orientar recetas y sugerencias (opcional)</p>
+                <PreferenceChipGrid
+                  labels={cuisineChipLabels}
+                  selected={tastes.preferredCuisines}
+                  onToggle={toggleCuisine}
+                />
               </div>
             </div>
           )}
@@ -202,11 +267,12 @@ export default function OnboardingPage() {
 
           <div className="flex gap-3 mt-8">
             {step > 0 && (
-              <button onClick={() => setStep(s => s - 1)} className="flex-1 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition">
+              <button type="button" onClick={() => setStep(s => s - 1)} className="flex-1 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition">
                 Atrás
               </button>
             )}
             <button
+              type="button"
               onClick={() => step < STEPS.length - 1 ? setStep(s => s + 1) : finish()}
               disabled={loading}
               className="flex-1 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition disabled:opacity-60"

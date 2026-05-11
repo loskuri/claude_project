@@ -85,21 +85,41 @@ export async function getDailySummary(userId: string, date?: string) {
   return { date: dateStr, logs, totals };
 }
 
+const emptyDay = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+
+/** Inclusive UTC calendar range for macro totals per day (zeros when no meals). */
 export async function getMacroHistory(userId: string, from?: string, to?: string) {
-  const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  fromDate.setUTCHours(0, 0, 0, 0);
-  const toDate = to ? new Date(to) : new Date();
-  toDate.setUTCHours(23, 59, 59, 999);
+  let start: Date;
+  let endDay: Date;
+
+  if (from && to) {
+    start = utcMidnight(from);
+    endDay = utcMidnight(to);
+  } else if (from) {
+    start = utcMidnight(from);
+    endDay = utcMidnight();
+  } else if (to) {
+    endDay = utcMidnight(to);
+    start = new Date(endDay);
+    start.setUTCDate(start.getUTCDate() - 29);
+  } else {
+    endDay = utcMidnight();
+    start = new Date(endDay);
+    start.setUTCDate(start.getUTCDate() - 29);
+  }
+
+  const rangeEnd = new Date(endDay);
+  rangeEnd.setUTCHours(23, 59, 59, 999);
 
   const logs = await prisma.mealLog.findMany({
-    where: { userId, date: { gte: fromDate, lte: toDate } },
+    where: { userId, date: { gte: start, lte: rangeEnd } },
     orderBy: { date: 'asc' },
   });
 
   const byDate = new Map<string, { calories: number; proteinG: number; carbsG: number; fatG: number }>();
   for (const log of logs) {
     const key = log.date.toISOString().split('T')[0];
-    const existing = byDate.get(key) ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+    const existing = byDate.get(key) ?? { ...emptyDay };
     byDate.set(key, {
       calories: existing.calories + log.calories,
       proteinG: existing.proteinG + log.proteinG,
@@ -108,7 +128,15 @@ export async function getMacroHistory(userId: string, from?: string, to?: string
     });
   }
 
-  return Array.from(byDate.entries()).map(([date, totals]) => ({ date, ...totals }));
+  const history: Array<{ date: string; calories: number; proteinG: number; carbsG: number; fatG: number }> = [];
+  const cursor = new Date(start);
+  while (cursor.getTime() <= endDay.getTime()) {
+    const key = cursor.toISOString().split('T')[0];
+    history.push({ date: key, ...(byDate.get(key) ?? { ...emptyDay }) });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return history;
 }
 
 const customMealResponseSchema = z.object({

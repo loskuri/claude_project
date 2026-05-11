@@ -1,14 +1,30 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
-import type { NutritionTargets, NutritionPlan } from '@nutriplan/shared';
+import type { NutritionTargets, NutritionPlan, MealType } from '@nutriplan/shared';
 import { DAY_NAMES_ES } from '@nutriplan/shared';
 
 interface DailySummary {
+  date?: string;
+  logs?: { mealType: string }[];
   totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+}
+
+const MEAL_TYPE_ORDER: MealType[] = [
+  'BREAKFAST',
+  'MORNING_SNACK',
+  'LUNCH',
+  'AFTERNOON_SNACK',
+  'DINNER',
+];
+
+function mealTypeSortIndex(mealType: string): number {
+  const i = MEAL_TYPE_ORDER.indexOf(mealType as MealType);
+  return i === -1 ? 99 : i;
 }
 
 function CalorieRing({ consumed, target }: { consumed: number; target: number }) {
@@ -78,6 +94,27 @@ export default function DashboardPage() {
 
   const todayMenu = plan;
   const consumed = dailySummary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+
+  const { sortedTodayMeals, loggedMealTypes, nextMealId } = useMemo(() => {
+    if (!todayMenu?.meals?.length) {
+      return { sortedTodayMeals: [], loggedMealTypes: new Set<string>(), nextMealId: null as string | null };
+    }
+    const logged = new Set<string>();
+    for (const log of dailySummary?.logs ?? []) {
+      logged.add(log.mealType);
+    }
+    const sorted = [...todayMenu.meals].sort(
+      (a, b) => mealTypeSortIndex(a.mealType) - mealTypeSortIndex(b.mealType),
+    );
+    let nextId: string | null = null;
+    for (const meal of sorted) {
+      if (!logged.has(meal.mealType)) {
+        nextId = meal.id;
+        break;
+      }
+    }
+    return { sortedTodayMeals: sorted, loggedMealTypes: logged, nextMealId: nextId };
+  }, [todayMenu, dailySummary?.logs]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
@@ -159,16 +196,71 @@ export default function DashboardPage() {
             {[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 rounded-xl" />)}
           </div>
         ) : todayMenu ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {todayMenu.meals.map((meal) => (
-              <div key={meal.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-brand-600 mb-0.5">{MEAL_LABELS[meal.mealType] ?? meal.mealType}</div>
-                  <div className="font-medium text-gray-800 text-sm truncate">{meal.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{meal.calories} kcal · {meal.proteinG}g prot</div>
+          <div className="flex flex-col gap-3 max-w-xl">
+            {sortedTodayMeals.map((meal) => {
+              const isLogged = loggedMealTypes.has(meal.mealType);
+              const isNext = !isLogged && meal.id === nextMealId;
+              return (
+                <div
+                  key={meal.id}
+                  className={
+                    isNext
+                      ? 'relative rounded-2xl border-2 border-brand-500 bg-gradient-to-br from-brand-50 to-white p-4 shadow-md shadow-brand-500/15 ring-4 ring-brand-200/60'
+                      : isLogged
+                        ? 'rounded-xl border border-emerald-100 bg-emerald-50/70 p-4'
+                        : 'rounded-xl border border-gray-100 bg-gray-50 p-4'
+                  }
+                >
+                  {isNext ? (
+                    <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                      <span aria-hidden>→</span> Tu próxima comida
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-medium text-brand-700 mb-0.5">
+                        {MEAL_LABELS[meal.mealType] ?? meal.mealType}
+                      </div>
+                      <div className={`font-semibold text-gray-900 truncate ${isNext ? 'text-base' : 'text-sm'}`}>
+                        {meal.name}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {meal.calories} kcal · {meal.proteinG}g prot
+                      </div>
+                    </div>
+                    <div
+                      className={
+                        isLogged
+                          ? 'shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800'
+                          : 'shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900'
+                      }
+                    >
+                      {isLogged ? (
+                        <>
+                          <span aria-hidden>✓</span> Registrada
+                        </>
+                      ) : (
+                        <>Pendiente</>
+                      )}
+                    </div>
+                  </div>
+                  {isNext ? (
+                    <p className="mt-3 text-sm text-brand-900">
+                      <span className="font-medium">Registrá esta comida en el menú</span>
+                      {' '}para seguir tu día.{' '}
+                      <Link href="/menu" className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800">
+                        Ir al menú
+                      </Link>
+                    </p>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            {!nextMealId && sortedTodayMeals.length > 0 ? (
+              <p className="text-center text-sm font-medium text-emerald-800 bg-emerald-50 rounded-xl py-3 px-4 border border-emerald-100">
+                ¡Listo! Ya registraste todas las comidas del plan de hoy.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="text-center py-10">

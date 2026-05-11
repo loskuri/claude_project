@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
+import { MacroHistoryChart } from '@/components/macro-history-chart';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
 interface WeightLog { id: string; date: string; weightKg: number; notes?: string; }
-interface MacroDay { date: string; calories: number; proteinG: number; carbsG: number; fatG: number; }
 
 type ActiveTab = 'weight' | 'macros';
 
@@ -29,30 +29,16 @@ export default function ProgressPage() {
     queryFn: () => apiFetch('/progress/weight'),
   });
 
-  const { data: macroData, isLoading: loadingMacros } = useQuery<{ history: MacroDay[] }>({
-    queryKey: ['meal-logs-history'],
-    queryFn: () => apiFetch('/meal-logs/history'),
-  });
-
   const addMutation = useMutation({
     mutationFn: (body: object) => apiFetch('/progress/weight', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress-weight'] }); setWeight(''); setNotes(''); setDate(todayISO()); },
   });
 
   const logs = weightData?.logs ?? [];
-  const macroHistory = macroData?.history ?? [];
 
   const weightChartData = logs.map((l) => ({
     date: new Date(l.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
     peso: l.weightKg,
-  }));
-
-  const macroChartData = macroHistory.map((d) => ({
-    date: new Date(d.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }),
-    Proteína: Math.round(d.proteinG),
-    Carbos: Math.round(d.carbsG),
-    Grasas: Math.round(d.fatG),
-    kcal: Math.round(d.calories),
   }));
 
   const latest = logs[logs.length - 1];
@@ -153,26 +139,7 @@ export default function ProgressPage() {
               </div>
             )
           ) : (
-            loadingMacros ? (
-              <div className="animate-pulse h-48 bg-gray-100 rounded-xl" />
-            ) : macroChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={macroChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="Proteína" stackId="a" fill="#16a34a" />
-                  <Bar dataKey="Carbos" stackId="a" fill="#3b82f6" />
-                  <Bar dataKey="Grasas" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-                Registrá comidas para ver tus macros diarios
-              </div>
-            )
+            <MacroHistoryChart days={30} height={200} enabled={tab === 'macros'} />
           )}
         </div>
       </div>
