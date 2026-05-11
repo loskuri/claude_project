@@ -6,6 +6,12 @@ import * as mealLogsService from './meal-logs.service.js';
 const router = Router();
 router.use(authMiddleware);
 
+function mealLogIdParam(id: string | string[] | undefined): string | undefined {
+  if (typeof id === 'string' && id.length > 0) return id;
+  if (Array.isArray(id) && typeof id[0] === 'string' && id[0].length > 0) return id[0];
+  return undefined;
+}
+
 router.post('/from-text', async (req, res, next) => {
   try {
     const { text, date } = req.body as { text?: unknown; date?: unknown };
@@ -72,7 +78,12 @@ router.get('/history', async (req, res, next) => {
 
 router.patch('/:id', validateBody(mealLogsService.updateMealLogSchema), async (req, res, next) => {
   try {
-    const log = await mealLogsService.updateMealLog(req.user!.id, req.params.id, req.body);
+    const id = mealLogIdParam(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: 'ID de registro inválido' });
+      return;
+    }
+    const log = await mealLogsService.updateMealLog(req.user!.id, id, req.body);
     res.json(log);
   } catch (err) {
     next(err);
@@ -81,7 +92,12 @@ router.patch('/:id', validateBody(mealLogsService.updateMealLogSchema), async (r
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    await mealLogsService.deleteMealLog(req.user!.id, req.params.id);
+    const id = mealLogIdParam(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: 'ID de registro inválido' });
+      return;
+    }
+    await mealLogsService.deleteMealLog(req.user!.id, id);
     res.json({ success: true });
   } catch (err) {
     next(err);
