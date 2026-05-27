@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nutriplan/shared": "*",
+    "@nutriplan/shared": "workspace:*",
     "@tanstack/react-query": "^5.56.0",
     "expo": "~55.0.0",
     "expo-barcode-scanner": "~13.0.0",

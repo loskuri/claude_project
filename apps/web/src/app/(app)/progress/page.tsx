@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import { MacroHistoryChart } from '@/components/macro-history-chart';
+import { useToast } from '@/components/toast';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid,
@@ -19,6 +20,7 @@ function todayISO() {
 
 export default function ProgressPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [weight, setWeight] = useState('');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(todayISO());
@@ -31,7 +33,12 @@ export default function ProgressPage() {
 
   const addMutation = useMutation({
     mutationFn: (body: object) => apiFetch('/progress/weight', { method: 'POST', body: JSON.stringify(body) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['progress-weight'] }); setWeight(''); setNotes(''); setDate(todayISO()); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['progress-weight'] });
+      setWeight(''); setNotes(''); setDate(todayISO());
+      toast('Peso registrado correctamente', 'success');
+    },
+    onError: () => toast('Error al registrar el peso', 'error'),
   });
 
   const logs = weightData?.logs ?? [];
@@ -46,8 +53,8 @@ export default function ProgressPage() {
   const delta = latest && first ? (latest.weightKg - first.weightKg).toFixed(1) : null;
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Mi progreso</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6 md:mb-8">Mi progreso</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -133,9 +140,17 @@ export default function ProgressPage() {
                   <Line type="monotone" dataKey="peso" stroke="#16a34a" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
+            ) : weightChartData.length === 1 ? (
+              <div className="flex flex-col items-center justify-center h-48 gap-2">
+                <span className="text-3xl">📊</span>
+                <p className="text-sm font-medium text-gray-700">¡Primer registro guardado!</p>
+                <p className="text-xs text-gray-400 text-center">Registrá un peso más para ver tu evolución en la gráfica</p>
+              </div>
             ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-                Registrá al menos 2 pesos para ver la gráfica
+              <div className="flex flex-col items-center justify-center h-48 gap-2">
+                <span className="text-3xl">⚖️</span>
+                <p className="text-sm font-medium text-gray-700">Sin registros todavía</p>
+                <p className="text-xs text-gray-400 text-center">Registrá tu peso de hoy para empezar a ver tu progreso</p>
               </div>
             )
           ) : (
