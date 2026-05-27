@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
-import { streamMessage } from '../../shared/ai.client.js';
+import { streamMessage, completeMessage } from '../../shared/ai.client.js';
 import { incrementCounter } from '../../shared/cache.service.js';
 import { buildRecipePrompt } from './recipes.prompts.js';
 import type { MealType } from '@nutriplan/shared';
@@ -120,4 +120,52 @@ export async function deleteSavedRecipe(userId: string, recipeId: string) {
   const recipe = await prisma.recipe.findFirst({ where: { id: recipeId, userId, isSaved: true } });
   if (!recipe) throw new AppError(404, 'Receta no encontrada');
   await prisma.recipe.delete({ where: { id: recipeId } });
+}
+
+export async function autoSaveRecipe(
+  userId: string,
+  params: { mealType?: string; suggestionsText?: string; ingredientsText?: string },
+): Promise<{ id: string; name: string }> {
+  const today = new Date().toISOString().split('T')[0];
+  const count = await incrementCounter(`rate:recipe:auto:${userId}:${today}`, 86400);
+  if (count > 40) throw new AppError(429, 'Límite de auto-generación de recetas alcanzado.');
+
+  const prompt = buildRecipePrompt({
+    inventoryItems: [],
+    mealType: params.mealType as MealType | undefined,
+    servings: 2,
+    ingredientsText: params.ingredientsText,
+    suggestionsText: params.suggestionsText,
+  });
+
+  let rawResponse: string;
+  try {
+    rawResponse = await completeMessage({ userMessage: prompt, maxTokens: 2048 });
+  } catch {
+    throw new AppError(503, 'No se pudo generar la receta.');
+  }
+
+  const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new AppError(503, 'Respuesta inválida del generador.');
+  const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+
+  const recipe = await prisma.recipe.create({
+    data: {
+      userId,
+      name: String(parsed.name ?? 'Receta generada'),
+      description: String(parsed.description ?? ''),
+      ingredients: (parsed.ingredients ?? []) as object[],
+      steps: (parsed.steps ?? []) as string[],
+      prepTimeMins: Number(parsed.prepTimeMins ?? 0),
+      cookTimeMins: Number(parsed.cookTimeMins ?? 0),
+      servings: Number(parsed.servings ?? 2),
+      calories: Number(parsed.calories ?? 0),
+      proteinG: Number(parsed.proteinG ?? 0),
+      carbsG: Number(parsed.carbsG ?? 0),
+      fatG: Number(parsed.fatG ?? 0),
+      tags: (parsed.tags ?? []) as string[],
+      isSaved: true,
+    },
+  });
+  return { id: recipe.id, name: recipe.name };
 }

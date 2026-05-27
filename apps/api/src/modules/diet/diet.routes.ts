@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import * as dietService from './diet.service.js';
+import { getShoppingList } from './diet.shopping.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -83,6 +84,47 @@ router.post('/generate/week/stream', async (req, res) => {
     send({ type: 'error', message, status });
   } finally {
     res.end();
+  }
+});
+
+router.post('/meal/:mealId/swap/stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const send = (data: Record<string, unknown>) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    for await (const event of dietService.swapMealStream(req.user!.id, req.params.mealId)) {
+      send(event as Record<string, unknown>);
+    }
+  } catch (err) {
+    const message = err instanceof AppError ? err.message : 'No se pudo generar el reemplazo.';
+    const status = err instanceof AppError ? err.statusCode : 503;
+    send({ type: 'error', message, status });
+  } finally {
+    res.end();
+  }
+});
+
+router.get('/shopping-list', async (req, res, next) => {
+  try {
+    const list = await getShoppingList(req.user!.id);
+    res.json(list);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/preferences/dislike', async (req, res, next) => {
+  try {
+    const { mealName } = req.body as { mealName?: string };
+    if (!mealName?.trim()) throw new AppError(400, 'mealName requerido');
+    await dietService.addDislike(req.user!.id, mealName);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
   }
 });
 

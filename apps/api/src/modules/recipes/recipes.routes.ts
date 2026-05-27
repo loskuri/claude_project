@@ -15,6 +15,21 @@ const generateSchema = z.object({
   suggestionsText: z.string().trim().max(2000).optional(),
 });
 
+const autoGenerateSchema = z.object({
+  mealType: z.string().optional(),
+  suggestionsText: z.string().trim().max(2000).optional(),
+  ingredientsText: z.string().trim().max(2000).optional(),
+});
+
+router.post('/auto-generate', validateBody(autoGenerateSchema), async (req, res, next) => {
+  try {
+    const result = await recipesService.autoSaveRecipe(req.user!.id, req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/generate', validateBody(generateSchema), async (req, res, next) => {
   try {
     await recipesService.streamRecipe(req.user!.id, req.body, res);

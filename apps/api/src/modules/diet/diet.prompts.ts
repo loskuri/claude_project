@@ -106,3 +106,50 @@ Devolvé EXACTAMENTE este JSON (sin texto adicional):
 
 Incluí exactamente ${days} día${days > 1 ? 's' : ''} (dayOfWeek 0=Lunes${days > 1 ? ` a ${days - 1}=${DAY_NAMES_ES[days - 1]}` : ' solamente'}). Cada día debe tener exactamente ${mealsPerDay} comidas con los tipos: ${mealTypes.join(', ')}.`;
 }
+
+export function buildMealSwapPrompt(
+  profile: UserProfile,
+  preferences: UserPreferences | null,
+  targets: NutritionTargets,
+  mealToReplace: { mealType: string; name: string; calories: number; proteinG: number; carbsG: number; fatG: number },
+): string {
+  const ageYears = Math.floor(
+    (Date.now() - new Date(profile.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25),
+  );
+  const dislikedList = (preferences?.dislikedFoods ?? []).filter((f: string) => f.trim());
+  const disliked = dislikedList.length ? dislikedList.join(', ') : 'ninguno declarado';
+  const allergiesList = (preferences?.allergies ?? []).filter((a: string) => a.trim());
+  const allergies = allergiesList.length ? allergiesList.join(', ') : 'ninguna declarada';
+  const mealLabel = MEAL_TYPE_LABELS[mealToReplace.mealType] ?? mealToReplace.mealType;
+
+  return `Reemplazá la comida "${mealLabel}" porque al usuario no le gustó "${mealToReplace.name}".
+
+PERFIL:
+- Sexo: ${profile.sex === 'MALE' ? 'Masculino' : 'Femenino'}, Edad: ${ageYears} años
+- Peso: ${profile.weightKg}kg, Objetivo: ${profile.goal}
+
+OBJETIVO NUTRICIONAL para esta comida:
+- Calorías: ~${mealToReplace.calories} kcal
+- Proteínas: ~${mealToReplace.proteinG}g, Carbohidratos: ~${mealToReplace.carbsG}g, Grasas: ~${mealToReplace.fatG}g
+
+RESTRICCIONES (obligatorio):
+- Alergias: ${allergies}
+- Alimentos a evitar (incluye lo rechazado): ${disliked}
+
+Devolvé EXACTAMENTE este JSON (una sola comida, sin wrapper adicional):
+{
+  "mealType": "${mealToReplace.mealType}",
+  "name": "nombre en español",
+  "description": "descripción breve",
+  "prepTimeMins": number,
+  "cookTimeMins": number,
+  "calories": number,
+  "proteinG": number,
+  "carbsG": number,
+  "fatG": number,
+  "ingredients": [
+    { "name": "string", "quantity": number, "unit": "g|ml|units", "calories": number, "proteinG": number, "carbsG": number, "fatG": number }
+  ],
+  "preparationSteps": ["paso 1", "paso 2"]
+}`;
+}

@@ -4,7 +4,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import { completeMessage, streamMessage } from '../../shared/ai.client.js';
 import { getCache, setCache, deleteCachePattern, incrementCounter } from '../../shared/cache.service.js';
 import { getNutritionTargets } from '../nutrition/nutrition.service.js';
-import { buildDietPlanPrompt } from './diet.prompts.js';
+import { buildDietPlanPrompt, buildMealSwapPrompt } from './diet.prompts.js';
 
 const ingredientSchema = z.object({
   name: z.string(),
@@ -372,7 +372,7 @@ export async function getPlanByDate(userId: string, dateStr: string) {
 
 type WeekPlanEvent =
   | { type: 'status'; message: string; current: number; total: number }
-  | { type: 'day-done'; date: string }
+  | { type: 'day-done'; date: string; meals: ReturnType<typeof formatMeal>[] }
   | { type: 'done'; generated: number; skipped: number };
 
 export async function* generateWeekPlanStream(userId: string): AsyncGenerator<WeekPlanEvent> {
@@ -495,9 +495,10 @@ export async function* generateWeekPlanStream(userId: string): AsyncGenerator<We
     });
 
     const dateStr = day.toISOString().split('T')[0];
-    await setCache(`diet:plan:${userId}:${dateStr}`, formatPlan(plan), 60 * 60 * 24);
+    const formatted = formatPlan(plan);
+    await setCache(`diet:plan:${userId}:${dateStr}`, formatted, 60 * 60 * 24);
     generated++;
-    yield { type: 'day-done', date: dateStr };
+    yield { type: 'day-done', date: dateStr, meals: formatted.meals };
   }
 
   yield { type: 'done', generated, skipped: total - generated };
@@ -587,6 +588,23 @@ type PrismaNutritionPlan = {
   meals: PrismaMeal[];
 };
 
+function formatMeal(meal: PrismaMeal) {
+  return {
+    id: meal.id,
+    mealType: meal.mealType,
+    name: meal.name,
+    description: meal.description,
+    prepTimeMins: meal.prepTimeMins,
+    cookTimeMins: meal.cookTimeMins,
+    calories: meal.calories,
+    proteinG: meal.proteinG,
+    carbsG: meal.carbsG,
+    fatG: meal.fatG,
+    ingredients: meal.ingredients,
+    preparationSteps: meal.preparationSteps,
+  };
+}
+
 function formatPlan(plan: PrismaNutritionPlan) {
   return {
     id: plan.id,
@@ -602,19 +620,131 @@ function formatPlan(plan: PrismaNutritionPlan) {
     targetCarbsG: plan.targetCarbsG,
     targetFatG: plan.targetFatG,
     generatedAt: plan.generatedAt.toISOString(),
-    meals: plan.meals.map((meal) => ({
-      id: meal.id,
-      mealType: meal.mealType,
-      name: meal.name,
-      description: meal.description,
-      prepTimeMins: meal.prepTimeMins,
-      cookTimeMins: meal.cookTimeMins,
-      calories: meal.calories,
-      proteinG: meal.proteinG,
-      carbsG: meal.carbsG,
-      fatG: meal.fatG,
-      ingredients: meal.ingredients,
-      preparationSteps: meal.preparationSteps,
-    })),
+    meals: plan.meals.map(formatMeal),
   };
+}
+
+type SwapMealEvent =
+  | { type: 'status'; message: string }
+  | { type: 'done'; meal: ReturnType<typeof formatMeal> };
+
+export async function* swapMealStream(userId: string, mealId: string): AsyncGenerator<SwapMealEvent> {
+  const mealRecord = await prisma.meal.findFirst({
+    where: { id: mealId },
+    include: { nutritionPlan: { select: { userId: true, date: true, id: true } } },
+  });
+  if (!mealRecord || mealRecord.nutritionPlan.userId !== userId) {
+    throw new AppError(404, 'Comida no encontrada');
+  }
+
+  yield { type: 'status', message: 'Registrando preferencia...' };
+  await addDislike(userId, mealRecord.name);
+
+  const profile = await prisma.userProfile.findUnique({ where: { userId } });
+  if (!profile) throw new AppError(400, 'Completá tu perfil antes de modificar el plan');
+
+  const preferences = await prisma.userPreferences.findUnique({ where: { userId } });
+  const targets = await getNutritionTargets(userId);
+  const dateStr = mealRecord.nutritionPlan.date.toISOString().split('T')[0];
+  await deleteCachePattern(`diet:plan:${userId}:${dateStr}`);
+
+  yield { type: 'status', message: 'Generando reemplazo con IA...' };
+
+  const prompt = buildMealSwapPrompt(
+    {
+      id: profile.id,
+      userId: profile.userId,
+      firstName: profile.firstName,
+      lastName: profile.lastName ?? undefined,
+      birthDate: profile.birthDate.toISOString(),
+      sex: profile.sex as 'MALE' | 'FEMALE',
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      activityLevel: profile.activityLevel as Parameters<typeof buildDietPlanPrompt>[0]['activityLevel'],
+      goal: profile.goal as Parameters<typeof buildDietPlanPrompt>[0]['goal'],
+      onboardingComplete: profile.onboardingComplete,
+    },
+    preferences
+      ? {
+          id: preferences.id,
+          userId: preferences.userId,
+          dietaryType: preferences.dietaryType as 'OMNIVORE' | 'VEGETARIAN' | 'VEGAN' | 'PESCATARIAN' | 'KETO' | 'PALEO',
+          allergies: preferences.allergies,
+          dislikedFoods: preferences.dislikedFoods,
+          preferredCuisines: preferences.preferredCuisines,
+          mealsPerDay: preferences.mealsPerDay,
+        }
+      : null,
+    targets,
+    {
+      mealType: String(mealRecord.mealType),
+      name: mealRecord.name,
+      calories: mealRecord.calories,
+      proteinG: mealRecord.proteinG,
+      carbsG: mealRecord.carbsG,
+      fatG: mealRecord.fatG,
+    },
+  );
+
+  let accumulated = '';
+  try {
+    for await (const chunk of streamMessage({ userMessage: prompt, maxTokens: 2048 })) {
+      accumulated += chunk;
+    }
+  } catch (err) {
+    console.error(err);
+    throw new AppError(503, 'No se pudo generar el reemplazo. Intentá de nuevo.');
+  }
+
+  yield { type: 'status', message: 'Guardando cambios...' };
+
+  let parsedMeal: z.infer<typeof mealSchema>;
+  try {
+    const jsonMatch = accumulated.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found');
+    parsedMeal = mealSchema.parse(JSON.parse(jsonMatch[0]));
+  } catch {
+    throw new AppError(503, 'Respuesta inválida del generador. Intentá de nuevo.');
+  }
+
+  const updated = await prisma.meal.update({
+    where: { id: mealId },
+    data: {
+      name: parsedMeal.name,
+      description: parsedMeal.description,
+      prepTimeMins: parsedMeal.prepTimeMins,
+      cookTimeMins: parsedMeal.cookTimeMins,
+      calories: parsedMeal.calories,
+      proteinG: parsedMeal.proteinG,
+      carbsG: parsedMeal.carbsG,
+      fatG: parsedMeal.fatG,
+      ingredients: parsedMeal.ingredients,
+      preparationSteps: parsedMeal.preparationSteps,
+    },
+  });
+
+  const allMeals = await prisma.meal.findMany({ where: { nutritionPlanId: mealRecord.nutritionPlanId } });
+  await prisma.nutritionPlan.update({
+    where: { id: mealRecord.nutritionPlanId },
+    data: {
+      totalCalories: allMeals.reduce((s, m) => s + m.calories, 0),
+      totalProteinG: allMeals.reduce((s, m) => s + m.proteinG, 0),
+      totalCarbsG: allMeals.reduce((s, m) => s + m.carbsG, 0),
+      totalFatG: allMeals.reduce((s, m) => s + m.fatG, 0),
+    },
+  });
+
+  yield { type: 'done', meal: formatMeal(updated as unknown as PrismaMeal) };
+}
+
+export async function addDislike(userId: string, mealName: string): Promise<void> {
+  const name = mealName.trim();
+  if (!name) return;
+  const prefs = await prisma.userPreferences.findUnique({ where: { userId } });
+  if (prefs?.dislikedFoods.includes(name)) return;
+  if (prefs) {
+    await prisma.userPreferences.update({ where: { userId }, data: { dislikedFoods: { push: name } } });
+  } else {
+    await prisma.userPreferences.create({ data: { userId, dislikedFoods: [name] } });
+  }
 }

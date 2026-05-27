@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, apiStream, ApiError } from '@/lib/api-client';
+import Link from 'next/link';
+import { apiFetch, ApiError } from '@/lib/api-client';
 import type { NutritionPlan, Meal, NutritionTargets } from '@nutriplan/shared';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -184,6 +185,71 @@ function CustomMealModal({
   );
 }
 
+function MealDetailModal({ meal, onClose }: { meal: Meal; onClose: () => void }) {
+  const ingredients = meal.ingredients as Array<{ name: string; quantity: number; unit: string }>;
+  const steps = meal.preparationSteps as string[];
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-3 shrink-0">
+          <div>
+            <span className="text-xs font-semibold text-brand-600 uppercase tracking-wide">
+              {MEAL_TYPE_LABELS[meal.mealType] ?? meal.mealType}
+            </span>
+            <h2 className="text-lg font-bold text-gray-900 mt-0.5">{meal.name}</h2>
+            <p className="text-xs text-gray-400 mt-1">
+              {meal.calories} kcal · P:{meal.proteinG}g · C:{meal.carbsG}g · G:{meal.fatG}g
+              {(meal.prepTimeMins + meal.cookTimeMins) > 0 && (
+                <> · ⏱ {meal.prepTimeMins + meal.cookTimeMins} min</>
+              )}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none px-1 shrink-0">×</button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
+          {meal.description && (
+            <p className="text-sm text-gray-600">{meal.description}</p>
+          )}
+
+          {ingredients.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Ingredientes</h3>
+              <ul className="space-y-1.5">
+                {ingredients.map((ing, i) => (
+                  <li key={i} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-700">{ing.name}</span>
+                    <span className="text-gray-400 font-medium shrink-0 ml-3">{ing.quantity} {ing.unit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {steps.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Preparación</h3>
+              <ol className="space-y-3">
+                {steps.map((step, i) => (
+                  <li key={i} className="flex gap-3 text-sm">
+                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: '#5C7A2C' }}>
+                      {i + 1}
+                    </span>
+                    <span className="text-gray-700 pt-0.5">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MealCard({
   meal,
   onLog,
@@ -193,56 +259,46 @@ function MealCard({
   onLog: (meal: Meal) => void;
   loggedPortions?: number;
 }) {
-  const [open, setOpen] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const isLogged = loggedPortions !== undefined;
 
   return (
-    <div className={`p-3 rounded-xl ${isLogged ? 'bg-green-50 border border-green-100' : 'bg-gray-50'}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 cursor-pointer" onClick={() => setOpen(!open)}>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-brand-600 font-medium">{MEAL_TYPE_LABELS[meal.mealType] ?? meal.mealType}</span>
-            {isLogged && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Registrado · {loggedPortions}x
-              </span>
-            )}
+    <>
+      <div
+        className={`p-3 rounded-xl cursor-pointer transition hover:shadow-sm ${isLogged ? 'bg-green-50 border border-green-100' : 'bg-gray-50 hover:bg-gray-100'}`}
+        onClick={() => setShowDetail(true)}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-brand-600 font-medium">{MEAL_TYPE_LABELS[meal.mealType] ?? meal.mealType}</span>
+              {isLogged && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Registrado · {loggedPortions}x
+                </span>
+              )}
+            </div>
+            <div className="font-medium text-gray-800 text-sm mt-0.5">{meal.name}</div>
+            <div className="text-xs text-gray-500">{meal.calories} kcal · P:{meal.proteinG}g · C:{meal.carbsG}g · G:{meal.fatG}g</div>
           </div>
-          <div className="font-medium text-gray-800 text-sm mt-0.5">{meal.name}</div>
-          <div className="text-xs text-gray-500">{meal.calories} kcal · P:{meal.proteinG}g · C:{meal.carbsG}g · G:{meal.fatG}g</div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onLog(meal); }}
+              className="px-2.5 py-1 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition"
+            >
+              {isLogged ? 'Editar' : 'Registrar'}
+            </button>
+            <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
         </div>
-        <button
-          onClick={() => onLog(meal)}
-          className="flex-shrink-0 px-2.5 py-1 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition"
-        >
-          {isLogged ? 'Editar' : 'Registrar'}
-        </button>
       </div>
-      {open && (
-        <div className="mt-3 text-sm text-gray-600 border-t border-gray-200 pt-3 space-y-2">
-          <p className="text-gray-500">{meal.description}</p>
-          <div>
-            <strong className="text-xs uppercase text-gray-400">Ingredientes</strong>
-            <ul className="mt-1 space-y-0.5">
-              {(meal.ingredients as Array<{ name: string; quantity: number; unit: string }>).map((ing, i) => (
-                <li key={i} className="text-xs">{ing.name} — {ing.quantity}{ing.unit}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <strong className="text-xs uppercase text-gray-400">Preparación</strong>
-            <ol className="mt-1 space-y-1 list-decimal list-inside">
-              {(meal.preparationSteps as string[]).map((step, i) => (
-                <li key={i} className="text-xs">{step}</li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      )}
-    </div>
+      {showDetail && <MealDetailModal meal={meal} onClose={() => setShowDetail(false)} />}
+    </>
   );
 }
 
@@ -290,25 +346,9 @@ export default function MenuPage() {
   const [customMealError, setCustomMealError] = useState<string | null>(null);
   const [logSuccess, setLogSuccess] = useState<string | null>(null);
 
-  // Single-day generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
-  const [generatingProgress, setGeneratingProgress] = useState(0);
-  const [generateError, setGenerateError] = useState<string | null>(null);
-
-  // Week generation state
-  const [isWeekGenerating, setIsWeekGenerating] = useState(false);
-  const [weekProgress, setWeekProgress] = useState<{ message: string; current: number; total: number } | null>(null);
-  const [weekResult, setWeekResult] = useState<{ generated: number; skipped: number } | null>(null);
-  const [weekError, setWeekError] = useState<string | null>(null);
-
-  const ESTIMATED_TOTAL_CHARS = 6500;
   const selectedDate = getUTCDateAtOffset(dateOffset);
   const dateStr = toDateStr(selectedDate);
   const isToday = dateOffset === 0;
-  const canGenerate = dateOffset >= 0 && dateOffset <= 6; // allow only today + next 6 days
-  const isBusy = isGenerating || isWeekGenerating;
-
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = getUTCDateAtOffset(i);
     return { offset: i, date: d, dateStr: toDateStr(d) };
@@ -422,62 +462,6 @@ export default function MenuPage() {
     },
   });
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
-
-  async function handleGenerate() {
-    setIsGenerating(true);
-    setGenerateError(null);
-    setGeneratingStatus('Iniciando...');
-    setGeneratingProgress(0);
-    try {
-      await apiStream(
-        '/diet/generate/stream',
-        { method: 'POST', body: JSON.stringify({ date: dateStr }) },
-        (event) => {
-          if (event.type === 'status') {
-            setGeneratingStatus(event.message as string);
-          } else if (event.type === 'chunk') {
-            const pct = Math.min(95, Math.round(((event.chars as number) / ESTIMATED_TOTAL_CHARS) * 100));
-            setGeneratingProgress(pct);
-          } else if (event.type === 'done') {
-            setGeneratingProgress(100);
-            qc.setQueryData(['diet-by-date', dateStr], event.plan);
-            void qc.invalidateQueries({ queryKey: ['diet-by-date', dateStr] });
-          }
-        },
-      );
-    } catch (err) {
-      setGenerateError((err as Error).message);
-    } finally {
-      setIsGenerating(false);
-      setGeneratingStatus(null);
-      setGeneratingProgress(0);
-    }
-  }
-
-  async function handleGenerateWeek() {
-    setIsWeekGenerating(true);
-    setWeekError(null);
-    setWeekResult(null);
-    setWeekProgress(null);
-    try {
-      await apiStream('/diet/generate/week/stream', { method: 'POST', body: '{}' }, (event) => {
-        if (event.type === 'status') {
-          setWeekProgress({ message: event.message as string, current: event.current as number, total: event.total as number });
-        } else if (event.type === 'day-done') {
-          void qc.invalidateQueries({ queryKey: ['diet-by-date', event.date as string] });
-        } else if (event.type === 'done') {
-          setWeekResult({ generated: event.generated as number, skipped: event.skipped as number });
-          setWeekProgress(null);
-        }
-      });
-    } catch (err) {
-      setWeekError((err as Error).message);
-    } finally {
-      setIsWeekGenerating(false);
-    }
-  }
-
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -509,26 +493,21 @@ export default function MenuPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Mi menú</h1>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <button
-            onClick={() => void handleGenerateWeek()}
-            disabled={isBusy}
-            className="px-4 py-2 bg-white border-2 border-brand-200 text-brand-700 font-semibold rounded-xl hover:bg-brand-50 transition disabled:opacity-50 text-sm flex items-center gap-2"
+        <div className="flex gap-2 shrink-0">
+          <Link
+            href="/shopping-list"
+            className="px-3 py-2 font-semibold rounded-xl text-sm flex items-center gap-1.5 transition border-2"
+            style={{ borderColor: '#5C7A2C', color: '#5C7A2C' }}
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Planificar semana
-          </button>
-          {canGenerate && (
-            <button
-              onClick={() => void handleGenerate()}
-              disabled={isBusy}
-              className="px-4 py-2 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition disabled:opacity-50 text-sm"
-            >
-              {isGenerating ? 'Generando...' : '✨ Generar plan'}
-            </button>
-          )}
+            🛒 Compras
+          </Link>
+          <Link
+            href="/generate-plan"
+            className="px-4 py-2 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition"
+            style={{ backgroundColor: '#5C7A2C' }}
+          >
+            ✨ Generar plan
+          </Link>
         </div>
       </div>
 
@@ -570,68 +549,6 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Week generation progress */}
-      {(isWeekGenerating || weekResult || weekError) && (
-        <div className={`mb-6 rounded-xl p-4 text-sm border ${weekError ? 'bg-red-50 border-red-200 text-red-700' : weekResult ? 'bg-green-50 border-green-200 text-green-700' : 'bg-brand-50 border-brand-200 text-brand-700'}`}>
-          {weekError ? (
-            <div className="flex items-center justify-between">
-              <span>Error al planificar: {weekError}</span>
-              <button onClick={() => setWeekError(null)} className="text-xs underline ml-3">Cerrar</button>
-            </div>
-          ) : weekResult ? (
-            <div className="flex items-center justify-between">
-              <span>✓ {weekResult.generated} {weekResult.generated === 1 ? 'día planificado' : 'días planificados'}{weekResult.skipped > 0 ? `, ${weekResult.skipped} ya tenían plan` : ''}</span>
-              <button onClick={() => setWeekResult(null)} className="text-xs underline ml-3 text-green-600">Cerrar</button>
-            </div>
-          ) : weekProgress ? (
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <svg className="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                <span className="flex-1">{weekProgress.message}</span>
-                <span className="font-semibold tabular-nums">{weekProgress.current}/{weekProgress.total}</span>
-              </div>
-              <div className="h-1.5 bg-brand-100 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-500 rounded-full transition-all duration-500" style={{ width: `${Math.round((weekProgress.current / weekProgress.total) * 100)}%` }} />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              Iniciando planificación...
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Single-day generation progress */}
-      {isGenerating && (
-        <div className="mb-6 bg-brand-50 border border-brand-200 rounded-xl p-4 text-brand-700 text-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <svg className="animate-spin h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            <span>{generatingStatus ?? 'Generando tu plan...'}</span>
-            <span className="ml-auto font-semibold tabular-nums">{generatingProgress}%</span>
-          </div>
-          <div className="h-1.5 bg-brand-100 rounded-full overflow-hidden">
-            <div className="h-full bg-brand-500 rounded-full transition-all duration-300" style={{ width: `${generatingProgress}%` }} />
-          </div>
-        </div>
-      )}
-
-      {generateError && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
-          Error al generar el plan: {generateError}
-        </div>
-      )}
-
       {isToday && adjustedTargets?.adjusted && adjustedTargets.message && (
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-700 text-sm">
           {adjustedTargets.message}
@@ -670,18 +587,15 @@ export default function MenuPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm p-10 text-center mb-6">
-          <p className="text-gray-400 text-sm mb-4">No hay plan para {isToday ? 'hoy' : 'este día'}</p>
-          {canGenerate ? (
-            <button
-              onClick={() => void handleGenerate()}
-              disabled={isBusy}
-              className="px-5 py-2.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition disabled:opacity-60 text-sm"
-            >
-              {isGenerating ? 'Generando...' : '✨ Generar plan para este día'}
-            </button>
-          ) : (
-            <p className="text-xs text-gray-400">Solo podés generar planes para hoy y los próximos 6 días.</p>
-          )}
+          <div className="text-4xl mb-3">🥗</div>
+          <p className="text-gray-500 text-sm mb-4">No hay plan para {isToday ? 'hoy' : 'este día'}</p>
+          <Link
+            href="/generate-plan"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl text-sm transition"
+            style={{ backgroundColor: '#D4622A' }}
+          >
+            ✨ Generar plan con IA
+          </Link>
         </div>
       )}
 

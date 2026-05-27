@@ -335,9 +335,9 @@ export function AccountSettingsModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Alimentos o sabores que preferís evitar
+                    Alimentos rechazados (la IA los evita)
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">Opcional</p>
+                  <p className="text-xs text-gray-500 mb-2">Se actualizan automáticamente cuando usás "No me gusta"</p>
                   <PreferenceChipGrid
                     labels={dislikedChipLabels}
                     selected={dislikedFoods}
