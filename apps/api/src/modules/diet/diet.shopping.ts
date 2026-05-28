@@ -128,8 +128,8 @@ function isCountBased(name: string): boolean {
 function normalizeItem(item: ShoppingListItem): ShoppingListItem {
   let { name, quantity, unit } = item;
 
-  // 1. Count-based items: ignore AI unit, force integer count
-  if (isCountBased(name) && unit !== 'u') {
+  // 1. Count-based items: always force integer count in units
+  if (isCountBased(name)) {
     return { name, quantity: Math.ceil(quantity), unit: 'u' };
   }
 
@@ -207,7 +207,7 @@ export async function getShoppingList(userId: string): Promise<ShoppingListCateg
     const key = `${norm.name.toLowerCase()}|${norm.unit}`;
     const existing = normalized.get(key);
     if (existing) {
-      existing.quantity += norm.quantity;
+      existing.quantity = Math.round((existing.quantity + norm.quantity) * 100) / 100;
     } else {
       normalized.set(key, { ...norm });
     }
