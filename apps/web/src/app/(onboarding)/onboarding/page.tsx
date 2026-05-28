@@ -119,7 +119,7 @@ export default function OnboardingPage() {
       if (user && accessToken && refreshToken) {
         setAuth({ ...user, onboardingComplete: true }, accessToken, refreshToken);
       }
-      router.push('/dashboard');
+      router.push('/mi-semana');
     } catch (err) {
       setError((err as Error).message);
     } finally {

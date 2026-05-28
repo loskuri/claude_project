@@ -7,12 +7,11 @@ import { apiFetch, apiStream, ApiError } from '@/lib/api-client';
 import { getWeekDates, toDateStr, formatDateLong } from '@/lib/week-utils';
 import { WeekDayTabs, type DayTabInfo } from '@/components/week-day-tabs';
 import { DayMacroSummary } from '@/components/day-macro-summary';
-import { WeekMealCard, type MealStatus } from '@/components/week-meal-card';
+import { WeekMealCard, type MealStatus, PORTION_STEPS } from '@/components/week-meal-card';
 import { AddCustomMealModal, type CustomMealInput } from '@/components/add-custom-meal-modal';
 import type { NutritionPlan, NutritionTargets, Meal } from '@nutriplan/shared';
 
 const MEAL_TYPE_ORDER = ['BREAKFAST', 'MORNING_SNACK', 'LUNCH', 'AFTERNOON_SNACK', 'DINNER'];
-const PORTION_STEPS = [0.5, 1, 1.5, 2] as const;
 
 function sortMeals(meals: Meal[]): Meal[] {
   return [...meals].sort(
@@ -74,14 +73,30 @@ export default function MiSemanaPage() {
 
   const consumed = dailySummary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
-  const loggedMealTypes = useMemo(() => {
-    const logs = dailySummary?.logs ?? [];
-    return new Set(logs.map(l => l.mealType));
-  }, [dailySummary]);
+  const loggedMealIds = useMemo(() => {
+    const countsByType = new Map<string, number>();
+    for (const log of dailySummary?.logs ?? []) {
+      countsByType.set(log.mealType, (countsByType.get(log.mealType) ?? 0) + 1);
+    }
+    const ids = new Set<string>();
+    const byType = new Map<string, Meal[]>();
+    for (const meal of activeMeals) {
+      const arr = byType.get(meal.mealType) ?? [];
+      arr.push(meal);
+      byType.set(meal.mealType, arr);
+    }
+    for (const [type, meals] of byType) {
+      const count = countsByType.get(type) ?? 0;
+      for (let i = 0; i < Math.min(count, meals.length); i++) {
+        ids.add(meals[i].id);
+      }
+    }
+    return ids;
+  }, [dailySummary, activeMeals]);
 
   function getMealStatus(meal: Meal): MealStatus {
-    if (loggedMealTypes.has(meal.mealType)) return 'logged';
-    const firstUnlogged = activeMeals.find(m => !loggedMealTypes.has(m.mealType));
+    if (loggedMealIds.has(meal.id)) return 'logged';
+    const firstUnlogged = activeMeals.find(m => !loggedMealIds.has(m.id));
     if (firstUnlogged?.id === meal.id) return 'next';
     return 'future';
   }
@@ -92,7 +107,8 @@ export default function MiSemanaPage() {
 
   function handlePortionChange(mealId: string, direction: 1 | -1) {
     const current = getPortion(mealId);
-    const idx = PORTION_STEPS.indexOf(current as typeof PORTION_STEPS[number]);
+    const raw = PORTION_STEPS.indexOf(current as typeof PORTION_STEPS[number]);
+    const idx = raw === -1 ? 1 : raw; // default to 1× if value is out of range
     const nextIdx = Math.max(0, Math.min(PORTION_STEPS.length - 1, idx + direction));
     setPortions(prev => ({ ...prev, [mealId]: PORTION_STEPS[nextIdx] }));
   }
@@ -127,8 +143,9 @@ export default function MiSemanaPage() {
       await apiStream('/diet/generate/week/stream', { method: 'POST', body: '{}' }, (event) => {
         if (event.type === 'status') {
           setGenStatus(event.message as string);
-          const pct = Math.round(((event.current as number) / (event.total as number)) * 100);
-          if (!isNaN(pct)) setGenProgress(pct);
+          const total = event.total as number;
+          const pct = total > 0 ? Math.round(((event.current as number) / total) * 100) : 0;
+          setGenProgress(pct);
         } else if (event.type === 'day-done') {
           void qc.invalidateQueries({ queryKey: ['diet-by-date', event.date as string] });
         } else if (event.type === 'done') {

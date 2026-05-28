@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
@@ -20,7 +20,6 @@ type ShoppingCategory = {
 function formatQty(quantity: number, unit: string): string {
   const display = unit === 'u' ? 'unidades' : unit;
   const q = Number.isInteger(quantity) ? quantity : parseFloat(quantity.toFixed(1));
-  if (unit === 'u') return `${quantity} ${display}`;
   return `${q} ${display}`;
 }
 
@@ -32,10 +31,21 @@ export default function ShoppingListPage() {
   const [savingInventory, setSavingInventory] = useState(false);
   const [savedCount, setSavedCount] = useState<number | null>(null);
 
+  const localDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['shopping-list'],
-    queryFn: () => apiFetch<ShoppingCategory[]>('/diet/shopping-list'),
+    queryKey: ['shopping-list', localDate],
+    queryFn: () => apiFetch<ShoppingCategory[]>(`/diet/shopping-list?date=${localDate}`),
   });
+
+  // Purge stale checked keys when data refreshes (item keys can change if units scale)
+  useEffect(() => {
+    if (!data) return;
+    const validKeys = new Set(data.flatMap(c => c.items.map(i => `${i.name}|${i.unit}`)));
+    setChecked(prev => {
+      const filtered = new Set([...prev].filter(k => validKeys.has(k)));
+      return filtered.size === prev.size ? prev : filtered;
+    });
+  }, [data]);
 
   function toggleItem(key: string) {
     setChecked((prev) => {
@@ -60,7 +70,7 @@ export default function ShoppingListPage() {
       for (const item of cat.items) {
         const key = `${item.name}|${item.unit}`;
         if (!checked.has(key)) continue;
-        const unit = INVENTORY_UNITS.has(item.unit) ? item.unit : 'units';
+        const unit = item.unit === 'u' ? 'units' : INVENTORY_UNITS.has(item.unit) ? item.unit : 'units';
         try {
           await apiFetch('/inventory', {
             method: 'POST',

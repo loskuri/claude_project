@@ -7,7 +7,6 @@ import { useAuthStore } from '@/lib/auth-store';
 import { AccountSettingsModal } from '@/components/account-settings-modal';
 
 const NAV_ITEMS = [
-  { href: '/dashboard',     label: 'Inicio',      icon: '🏡', desc: 'Tu resumen diario',       iconBg: 'bg-brand-100' },
   { href: '/mi-semana',     label: 'Mi Semana',   icon: '📅', desc: 'Tu plan semanal',         iconBg: 'bg-amber-100' },
   { href: '/shopping-list', label: 'Compras',     icon: '🛒', desc: 'Lista semanal',            iconBg: 'bg-teal-100' },
   { href: '/inventory',     label: 'Inventario',  icon: '🥫', desc: 'Lo que tenés',             iconBg: 'bg-lime-100' },

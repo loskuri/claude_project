@@ -27,7 +27,7 @@ export default function LoginPage() {
       const data = await res.json() as { error?: string; user?: { id: string; email: string; firstName: string; onboardingComplete?: boolean }; accessToken?: string; refreshToken?: string };
       if (!res.ok) throw new Error(data.error ?? 'Error al ingresar');
       setAuth(data.user!, data.accessToken!, data.refreshToken!);
-      router.push(data.user?.onboardingComplete ? '/dashboard' : '/onboarding');
+      router.push(data.user?.onboardingComplete ? '/mi-semana' : '/onboarding');
     } catch (err) {
       setError((err as Error).message);
     } finally {

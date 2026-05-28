@@ -110,7 +110,10 @@ router.post('/meal/:mealId/swap/stream', async (req, res) => {
 
 router.get('/shopping-list', async (req, res, next) => {
   try {
-    const list = await getShoppingList(req.user!.id);
+    const dateStr = typeof req.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+      ? req.query.date
+      : undefined;
+    const list = await getShoppingList(req.user!.id, dateStr);
     res.json(list);
   } catch (err) {
     next(err);

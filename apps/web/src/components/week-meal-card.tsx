@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import type { Meal } from '@nutriplan/shared';
 
 const MEAL_TYPE_LABELS: Record<string, string> = {
@@ -20,8 +21,7 @@ const DOT_COLORS: Record<string, string> = {
 
 export type MealStatus = 'logged' | 'next' | 'future';
 
-// Allowed portion multipliers
-const PORTION_STEPS = [0.5, 1, 1.5, 2] as const;
+export const PORTION_STEPS = [0.5, 1, 1.5, 2] as const;
 
 interface WeekMealCardProps {
   meal: Meal;
@@ -30,7 +30,6 @@ interface WeekMealCardProps {
   swapping: boolean;
   onSwap: () => void;
   onPortionChange: (direction: 1 | -1) => void;
-  onViewRecipe?: () => void;
 }
 
 export function WeekMealCard({
@@ -40,8 +39,14 @@ export function WeekMealCard({
   swapping,
   onSwap,
   onPortionChange,
-  onViewRecipe,
 }: WeekMealCardProps) {
+  const [recipeOpen, setRecipeOpen] = useState(false);
+  const wasSwapping = useRef(false);
+  useEffect(() => {
+    if (wasSwapping.current && !swapping) setRecipeOpen(false);
+    wasSwapping.current = swapping;
+  }, [swapping]);
+
   const adjustedCal  = Math.round(meal.calories  * portion);
   const adjustedProt = Math.round(meal.proteinG  * portion);
   const adjustedCarb = Math.round(meal.carbsG    * portion);
@@ -50,19 +55,19 @@ export function WeekMealCard({
   const dotColor = DOT_COLORS[meal.mealType] ?? '#9A8B7A';
   const label    = MEAL_TYPE_LABELS[meal.mealType] ?? meal.mealType;
 
-  const portionIdx = PORTION_STEPS.indexOf(portion as typeof PORTION_STEPS[number]);
+  const rawIdx      = PORTION_STEPS.indexOf(portion as typeof PORTION_STEPS[number]);
+  const portionIdx  = rawIdx === -1 ? 1 : rawIdx; // default to 1× if value is out of range
   const canDecrease = portionIdx > 0;
   const canIncrease = portionIdx < PORTION_STEPS.length - 1;
 
   const cardStyle: React.CSSProperties = {
-    border:      status === 'next'   ? '2px solid #5C7A2C'
-               : status === 'logged' ? '1.5px solid #C0E4A8'
-               :                      '1.5px solid #EDE3D2',
-    background:  status === 'logged' ? '#F5FBF0' : '#FFFFFF',
-    boxShadow:   status === 'next'
-               ? '0 4px 18px rgba(92,122,44,0.13)'
-               : '0 1px 4px rgba(44,36,22,0.04)',
-    opacity:     status === 'future' ? 0.7 : 1,
+    border:     status === 'next'   ? '2px solid #5C7A2C'
+              : status === 'logged' ? '1.5px solid #C0E4A8'
+              :                       '1.5px solid #EDE3D2',
+    background: status === 'logged' ? '#F5FBF0' : '#FFFFFF',
+    boxShadow:  status === 'next'
+              ? '0 4px 18px rgba(92,122,44,0.13)'
+              : '0 1px 4px rgba(44,36,22,0.04)',
   };
 
   return (
@@ -121,21 +126,19 @@ export function WeekMealCard({
             >
               🔄 Cambiar
             </button>
-            {onViewRecipe && (
-              <button
-                onClick={onViewRecipe}
-                className="text-[11px] font-bold px-3 py-[6px] rounded-[9px] border"
-                style={{ background: '#F7F1E8', borderColor: '#E0D4C0', color: '#7A6E63' }}
-              >
-                📋 Receta
-              </button>
-            )}
+            <button
+              onClick={() => setRecipeOpen(o => !o)}
+              className="text-[11px] font-bold px-3 py-[6px] rounded-[9px] border"
+              style={{ background: recipeOpen ? '#E3EDDA' : '#F7F1E8', borderColor: recipeOpen ? '#C0DCA0' : '#E0D4C0', color: '#5C7A2C' }}
+            >
+              📋 Receta
+            </button>
           </div>
         )}
       </div>
 
-      {/* Portion controls — only for "next" meal */}
-      {status === 'next' && (
+      {/* Portion controls — all non-logged meals */}
+      {status !== 'logged' && (
         <div
           className="flex items-center gap-2 mt-3 pt-3"
           style={{ borderTop: '1px dashed #EDE3D2' }}
@@ -157,6 +160,52 @@ export function WeekMealCard({
             style={{ background: '#F0EAE0', color: '#5C7A2C' }}
           >+</button>
           <span className="text-[11px] font-semibold" style={{ color: '#B0A090' }}>= {adjustedCal} kcal</span>
+        </div>
+      )}
+
+      {/* Recipe panel */}
+      {recipeOpen && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid #EDE3D2' }}>
+          {meal.description && (
+            <p className="text-[12px] mb-3 leading-relaxed" style={{ color: '#6B5A47' }}>{meal.description}</p>
+          )}
+
+          {(meal.prepTimeMins > 0 || meal.cookTimeMins > 0) && (
+            <div className="flex gap-4 mb-3">
+              {meal.prepTimeMins > 0 && (
+                <span className="text-[11px] font-semibold" style={{ color: '#9A8B7A' }}>⏱ Prep: {meal.prepTimeMins} min</span>
+              )}
+              {meal.cookTimeMins > 0 && (
+                <span className="text-[11px] font-semibold" style={{ color: '#9A8B7A' }}>🍳 Cocción: {meal.cookTimeMins} min</span>
+              )}
+            </div>
+          )}
+
+          {meal.ingredients?.length > 0 && (
+            <div className="mb-3">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.5px] mb-1.5" style={{ color: '#9A8B7A' }}>
+                Ingredientes
+              </p>
+              {meal.ingredients.map((ing, i) => (
+                <p key={i} className="text-[12px]" style={{ color: '#6B5A47' }}>
+                  · {ing.name} — {ing.quantity} {ing.unit}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {meal.preparationSteps?.length > 0 && (
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.5px] mb-1.5" style={{ color: '#9A8B7A' }}>
+                Preparación
+              </p>
+              {meal.preparationSteps.map((step, i) => (
+                <p key={i} className="text-[12px] mb-1 leading-relaxed" style={{ color: '#6B5A47' }}>
+                  {i + 1}. {step}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
