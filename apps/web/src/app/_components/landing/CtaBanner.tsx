@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { ScrollReveal } from './ScrollReveal';
 
 export function CtaBanner() {
   return (
     <>
       <section className="px-6 pb-7">
+        <ScrollReveal>
         <div
           className="max-w-6xl mx-auto rounded-3xl py-14 px-10 text-center"
           style={{
@@ -38,6 +40,7 @@ export function CtaBanner() {
             Sin tarjeta de crédito · Cancelás cuando querés
           </p>
         </div>
+        </ScrollReveal>
       </section>
 
       <footer

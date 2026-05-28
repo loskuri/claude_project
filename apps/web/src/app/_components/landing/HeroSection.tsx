@@ -35,7 +35,7 @@ export function HeroSection() {
             <span className="block" style={{ color: '#5C7A2C' }}>sin culpa.</span>
             <span
               className="block font-fraunces font-normal text-4xl md:text-5xl"
-              style={{ color: '#D4622A', fontStyle: 'italic', animationDelay: '100ms' }}
+              style={{ color: '#D4622A', fontStyle: 'italic' }}
             >
               Vivite mejor.
             </span>
