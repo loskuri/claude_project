@@ -18,8 +18,10 @@ type ShoppingCategory = {
 };
 
 function formatQty(quantity: number, unit: string): string {
-  const q = quantity % 1 === 0 ? quantity : parseFloat(quantity.toFixed(1));
-  return `${q} ${unit}`;
+  const display = unit === 'u' ? 'unidades' : unit;
+  const q = Number.isInteger(quantity) ? quantity : parseFloat(quantity.toFixed(1));
+  if (unit === 'u') return `${quantity} ${display}`;
+  return `${q} ${display}`;
 }
 
 const INVENTORY_UNITS = new Set(['g', 'kg', 'ml', 'L', 'units']);
@@ -113,7 +115,7 @@ export default function ShoppingListPage() {
           <p className="text-gray-700 font-medium mb-1">No hay ingredientes esta semana</p>
           <p className="text-sm text-gray-500 mb-5">Generá un plan de comidas para ver qué necesitás comprar.</p>
           <Link
-            href="/generate-plan"
+            href="/mi-semana"
             className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-xl text-sm transition"
             style={{ backgroundColor: '#5C7A2C' }}
           >
