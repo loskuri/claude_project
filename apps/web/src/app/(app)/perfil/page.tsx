@@ -75,7 +75,7 @@ export default function MiPerfilPage() {
         method: 'PUT',
         body: JSON.stringify({
           firstName: profile.firstName,
-          birthDate: new Date(profile.birthDate).toISOString(),
+          birthDate: profile.birthDate ? new Date(profile.birthDate).toISOString() : undefined,
           sex: profile.sex,
           heightCm: profile.heightCm,
           weightKg: profile.weightKg,
