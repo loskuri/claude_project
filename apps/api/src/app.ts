@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -13,7 +14,7 @@ import recipesRoutes from './modules/recipes/recipes.routes.js';
 import progressRoutes from './modules/progress/progress.routes.js';
 import mealLogsRoutes from './modules/meal-logs/meal-logs.routes.js';
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
 
   app.use(helmet());

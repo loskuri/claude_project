@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { getNutritionTargets } from './nutrition.service.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 
 router.use(authMiddleware);
 

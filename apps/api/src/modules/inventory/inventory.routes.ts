@@ -8,7 +8,7 @@ import {
 } from './inventory.schemas.js';
 import * as inventoryService from './inventory.service.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 router.use(authMiddleware);
 
 router.get('/', async (req, res, next) => {

@@ -4,7 +4,7 @@ import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validate.middleware.js';
 import * as progressService from './progress.service.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 router.use(authMiddleware);
 
 const logWeightSchema = z.object({

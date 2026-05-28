@@ -4,7 +4,7 @@ import { validateBody } from '../../middleware/validate.middleware.js';
 import { updateProfileSchema, updatePreferencesSchema } from './users.schemas.js';
 import * as usersController from './users.controller.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 
 router.use(authMiddleware);
 

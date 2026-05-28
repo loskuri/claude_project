@@ -3,7 +3,7 @@ import { validateBody } from '../../middleware/validate.middleware.js';
 import { registerSchema, loginSchema, logoutSchema, refreshSchema } from './auth.schemas.js';
 import * as authController from './auth.controller.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 
 router.post('/register', validateBody(registerSchema), authController.registerHandler);
 router.post('/login', validateBody(loginSchema), authController.loginHandler);

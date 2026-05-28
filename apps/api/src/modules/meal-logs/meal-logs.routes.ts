@@ -3,7 +3,7 @@ import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validate.middleware.js';
 import * as mealLogsService from './meal-logs.service.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 router.use(authMiddleware);
 
 function mealLogIdParam(id: string | string[] | undefined): string | undefined {

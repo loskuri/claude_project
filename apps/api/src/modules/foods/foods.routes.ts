@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { validateQuery } from '../../middleware/validate.middleware.js';
 import * as foodsService from './foods.service.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 router.use(authMiddleware);
 
 const searchQuerySchema = z.object({

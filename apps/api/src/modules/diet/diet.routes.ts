@@ -4,7 +4,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import * as dietService from './diet.service.js';
 import { getShoppingList } from './diet.shopping.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 router.use(authMiddleware);
 
 router.post('/generate', async (req, res, next) => {
