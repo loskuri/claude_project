@@ -7,13 +7,13 @@ import { useAuthStore } from '@/lib/auth-store';
 import { AccountSettingsModal } from '@/components/account-settings-modal';
 
 const NAV_ITEMS = [
-  { href: '/dashboard',       label: 'Inicio',          icon: '🏡', desc: 'Tu resumen diario',  iconBg: 'bg-brand-100' },
-  { href: '/generate-plan',   label: 'Generar plan',    icon: '✨', desc: 'Plan con IA',        iconBg: 'bg-accent-100' },
-  { href: '/menu',            label: 'Mi menú',         icon: '📅', desc: 'Plan semanal',       iconBg: 'bg-amber-100' },
-  { href: '/shopping-list',   label: 'Compras',         icon: '🛒', desc: 'Lista semanal',      iconBg: 'bg-teal-100' },
-  { href: '/inventory',       label: 'Inventario',      icon: '🥫', desc: 'Lo que tenés',       iconBg: 'bg-lime-100' },
-  { href: '/recipes',         label: 'Recetas',         icon: '🍳', desc: 'Recetas con IA',     iconBg: 'bg-orange-100' },
-  { href: '/progress',        label: 'Progreso',        icon: '📈', desc: 'Tu evolución',       iconBg: 'bg-purple-100' },
+  { href: '/dashboard',     label: 'Inicio',      icon: '🏡', desc: 'Tu resumen diario',       iconBg: 'bg-brand-100' },
+  { href: '/mi-semana',     label: 'Mi Semana',   icon: '📅', desc: 'Tu plan semanal',         iconBg: 'bg-amber-100' },
+  { href: '/shopping-list', label: 'Compras',     icon: '🛒', desc: 'Lista semanal',            iconBg: 'bg-teal-100' },
+  { href: '/inventory',     label: 'Inventario',  icon: '🥫', desc: 'Lo que tenés',             iconBg: 'bg-lime-100' },
+  { href: '/recipes',       label: 'Mis Recetas', icon: '🍳', desc: 'Tus recetas guardadas',    iconBg: 'bg-orange-100' },
+  { href: '/perfil',        label: 'Mi Perfil',   icon: '⚙️', desc: 'Preferencias y objetivo', iconBg: 'bg-gray-100' },
+  { href: '/progress',      label: 'Progreso',    icon: '📈', desc: 'Tu evolución',             iconBg: 'bg-purple-100' },
 ];
 
 function UserAvatar({ name }: { name: string }) {
