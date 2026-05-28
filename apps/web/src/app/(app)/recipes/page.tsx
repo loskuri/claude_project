@@ -145,7 +145,7 @@ export default function MisRecetasPage() {
                 ) : null}
                 <button
                   onClick={() => deleteMutation.mutate(recipe.id)}
-                  disabled={deleteMutation.isPending}
+                  disabled={deleteMutation.isPending && deleteMutation.variables === recipe.id}
                   className="text-[11px] font-bold px-3 py-2 rounded-[9px] border disabled:opacity-40"
                   style={{ borderColor: '#FECACA', color: '#DC2626', background: '#FEF2F2' }}
                 >
