@@ -181,7 +181,7 @@ export default function DashboardPage() {
       <div className="rounded-2xl shadow-sm p-6" style={{ backgroundColor: 'white', border: '1px solid #EDD5B6' }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-gray-900 text-base">Plan para hoy</h2>
-          <Link href="/menu" className="text-sm font-semibold hover:underline flex items-center gap-1" style={{ color: '#5C7A2C' }}>
+          <Link href="/mi-semana" className="text-sm font-semibold hover:underline flex items-center gap-1" style={{ color: '#5C7A2C' }}>
             Ver menú completo <span aria-hidden>→</span>
           </Link>
         </div>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   {isNext && (
-                    <Link href="/menu" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800">
+                    <Link href="/mi-semana" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800">
                       Registrar en el menú →
                     </Link>
                   )}
@@ -245,7 +245,7 @@ export default function DashboardPage() {
             <div className="text-5xl mb-3">🥗</div>
             <p className="text-sm mb-2 font-medium" style={{ color: '#6B5A47' }}>Todavía no tenés un plan para hoy</p>
             <p className="text-xs mb-5" style={{ color: '#9A7B5A' }}>Generá tu plan semanal con IA y empezá a comer mejor</p>
-            <Link href="/generate-plan" className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl transition text-sm shadow-sm" style={{ backgroundColor: '#D4622A' }}>
+            <Link href="/mi-semana" className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl transition text-sm shadow-sm" style={{ backgroundColor: '#D4622A' }}>
               🌱 Generar mi plan con IA
             </Link>
           </div>
