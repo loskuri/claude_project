@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
+import { logError } from '../shared/log.js';
 
 export class AppError extends Error {
   constructor(
@@ -11,12 +12,18 @@ export class AppError extends Error {
 }
 
 export const errorMiddleware: ErrorRequestHandler = (err, req, res, _next) => {
+  const meta = {
+    method: req.method,
+    path: req.originalUrl,
+    ...(req.user?.id ? { userId: req.user.id } : {}),
+  };
+
   if (err instanceof AppError) {
-    console.error(`[AppError] ${req.method} ${req.path} → ${err.statusCode}: ${err.message}`);
+    logError('http', err.message, { ...meta, status: err.statusCode });
     res.status(err.statusCode).json({ error: err.message });
     return;
   }
 
-  console.error(`[UnhandledError] ${req.method} ${req.path}`, err);
+  logError('http', 'Unhandled error', { ...meta, status: 500 }, err);
   res.status(500).json({ error: 'Error interno del servidor' });
 };

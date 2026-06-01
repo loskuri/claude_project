@@ -150,10 +150,15 @@ export default function MiSemanaPage() {
           void qc.invalidateQueries({ queryKey: ['diet-by-date', event.date as string] });
         } else if (event.type === 'done') {
           setGenProgress(100);
+          console.info('[mi-semana] week generation done', event);
+          if ((event.generated as number) === 0 && (event.skipped as number) === 7) {
+            setError('La semana ya está completa. No hay días nuevos para generar.');
+          }
           void qc.invalidateQueries({ queryKey: ['diet-current'] });
         }
       });
     } catch (err) {
+      console.error('[mi-semana] Generar semana failed', err);
       setError(err instanceof ApiError ? err.message : (err as Error).message);
     } finally {
       setGenerating(false);

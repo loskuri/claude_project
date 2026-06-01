@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { AppError } from '../../middleware/error.middleware.js';
+import { logError, logInfo } from '../../shared/log.js';
 import * as dietService from './diet.service.js';
 import { getShoppingList } from './diet.shopping.js';
 
@@ -33,6 +34,12 @@ router.post('/generate/stream', async (req, res) => {
   } catch (err) {
     const message = err instanceof AppError ? err.message : 'No se pudo generar el plan.';
     const status = err instanceof AppError ? err.statusCode : 503;
+    res.status(status);
+    logError('diet:stream', 'POST /diet/generate/stream failed', {
+      userId: req.user?.id,
+      status,
+      clientMessage: message,
+    }, err);
     send({ type: 'error', message, status });
   } finally {
     res.end();
@@ -73,14 +80,30 @@ router.post('/generate/week/stream', async (req, res) => {
   res.flushHeaders();
 
   const send = (data: Record<string, unknown>) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+  const userId = req.user!.id;
+
+  logInfo('diet:week', 'POST /diet/generate/week/stream started', { userId });
 
   try {
-    for await (const event of dietService.generateWeekPlanStream(req.user!.id)) {
+    for await (const event of dietService.generateWeekPlanStream(userId)) {
+      if (event.type === 'done') {
+        logInfo('diet:week', 'POST /diet/generate/week/stream finished', {
+          userId,
+          generated: event.generated,
+          skipped: event.skipped,
+        });
+      }
       send(event as Record<string, unknown>);
     }
   } catch (err) {
     const message = err instanceof AppError ? err.message : 'No se pudo generar el plan.';
     const status = err instanceof AppError ? err.statusCode : 503;
+    res.status(status);
+    logError('diet:week', 'POST /diet/generate/week/stream failed', {
+      userId,
+      status,
+      clientMessage: message,
+    }, err);
     send({ type: 'error', message, status });
   } finally {
     res.end();
@@ -102,6 +125,13 @@ router.post('/meal/:mealId/swap/stream', async (req, res) => {
   } catch (err) {
     const message = err instanceof AppError ? err.message : 'No se pudo generar el reemplazo.';
     const status = err instanceof AppError ? err.statusCode : 503;
+    res.status(status);
+    logError('diet:stream', 'POST /diet/meal/swap/stream failed', {
+      userId: req.user?.id,
+      mealId: req.params.mealId,
+      status,
+      clientMessage: message,
+    }, err);
     send({ type: 'error', message, status });
   } finally {
     res.end();

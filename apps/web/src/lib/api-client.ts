@@ -81,7 +81,9 @@ export async function apiStream(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Error desconocido' }));
-    throw new ApiError(res.status, (body as { error?: string }).error ?? res.statusText);
+    const message = (body as { error?: string }).error ?? res.statusText;
+    console.error('[apiStream] HTTP error', { path, status: res.status, message });
+    throw new ApiError(res.status, message);
   }
 
   const reader = res.body!.getReader();
@@ -101,10 +103,10 @@ export async function apiStream(
       try {
         const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
         if (event.type === 'error') {
-          throw new ApiError(
-            typeof event.status === 'number' ? event.status : 500,
-            typeof event.message === 'string' ? event.message : 'Error desconocido',
-          );
+          const status = typeof event.status === 'number' ? event.status : 500;
+          const message = typeof event.message === 'string' ? event.message : 'Error desconocido';
+          console.error('[apiStream] SSE error event', { path, status, message });
+          throw new ApiError(status, message);
         }
         onEvent(event);
       } catch (e) {

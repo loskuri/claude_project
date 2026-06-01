@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { completeMessage, streamMessage } from '../../shared/ai.client.js';
+import { logError, logInfo } from '../../shared/log.js';
 import { getCache, setCache, deleteCachePattern, incrementCounter } from '../../shared/cache.service.js';
 import { getNutritionTargets } from '../nutrition/nutrition.service.js';
 import { buildDietPlanPrompt, buildMealSwapPrompt } from './diet.prompts.js';
@@ -393,14 +394,25 @@ export async function* generateWeekPlanStream(userId: string): AsyncGenerator<We
   const existingDates = new Set(existingPlans.map((p) => p.date.toISOString().split('T')[0]));
   const missingDays = days.filter((d) => !existingDates.has(d.toISOString().split('T')[0]));
 
+  logInfo('diet:week', 'generateWeekPlanStream', {
+    userId,
+    missingDays: missingDays.length,
+    existingDays: 7 - missingDays.length,
+    dates: missingDays.map((d) => d.toISOString().split('T')[0]),
+  });
+
   if (missingDays.length === 0) {
+    logInfo('diet:week', 'All 7 days already have plans — skipping generation', { userId });
     yield { type: 'done', generated: 0, skipped: 7 };
     return;
   }
 
   const weekGenKey = `rate:diet:week:${userId}:${today.toISOString().split('T')[0]}`;
   const weekGenCount = await incrementCounter(weekGenKey, 86400);
-  if (weekGenCount > 1) throw new AppError(429, 'Solo podés generar la semana una vez por día.');
+  if (weekGenCount > 1) {
+    logInfo('diet:week', 'Weekly rate limit hit', { userId, weekGenCount });
+    throw new AppError(429, 'Solo podés generar la semana una vez por día.');
+  }
 
   const preferences = await prisma.userPreferences.findUnique({ where: { userId } });
   const targets = await getNutritionTargets(userId);
@@ -441,20 +453,28 @@ export async function* generateWeekPlanStream(userId: string): AsyncGenerator<We
       1,
     );
 
+    const dateStr = day.toISOString().split('T')[0];
     let rawResponse: string;
     try {
+      logInfo('diet:week', 'Calling AI for day', { userId, date: dateStr, dayLabel });
       rawResponse = await completeMessage({ userMessage: prompt, maxTokens: 8192 });
     } catch (err) {
-      console.error(`Error generating plan for ${dayLabel}:`, err);
+      logError('diet:week', 'AI call failed for day', { userId, date: dateStr, dayLabel }, err);
       continue;
     }
 
     let parsed: z.infer<typeof dietPlanResponseSchema>;
     try {
       const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found');
+      if (!jsonMatch) throw new Error('No JSON found in AI response');
       parsed = dietPlanResponseSchema.parse(JSON.parse(jsonMatch[0]));
-    } catch {
+    } catch (err) {
+      logError('diet:week', 'Invalid AI JSON for day', {
+        userId,
+        date: dateStr,
+        dayLabel,
+        responsePreview: rawResponse.slice(0, 300),
+      }, err);
       continue;
     }
 
@@ -494,11 +514,20 @@ export async function* generateWeekPlanStream(userId: string): AsyncGenerator<We
       include: { meals: true },
     });
 
-    const dateStr = day.toISOString().split('T')[0];
     const formatted = formatPlan(plan);
     await setCache(`diet:plan:${userId}:${dateStr}`, formatted, 60 * 60 * 24);
     generated++;
+    logInfo('diet:week', 'Day plan saved', { userId, date: dateStr, meals: formatted.meals.length });
     yield { type: 'day-done', date: dateStr, meals: formatted.meals };
+  }
+
+  if (generated === 0) {
+    logError('diet:week', 'No days generated after week stream', {
+      userId,
+      attempted: total,
+      hint: 'Check ANTHROPIC_API_KEY / AI_PROVIDER, Redis, and AI response format',
+    });
+    throw new AppError(503, 'No se pudo generar el plan. Intentá de nuevo.');
   }
 
   yield { type: 'done', generated, skipped: total - generated };

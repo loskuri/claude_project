@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { errorMiddleware } from './middleware/error.middleware.js';
+import { requestLogMiddleware } from './middleware/request-log.middleware.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import usersRoutes from './modules/users/users.routes.js';
 import nutritionRoutes from './modules/nutrition/nutrition.routes.js';
@@ -56,6 +57,7 @@ export function createApp(): Express {
   });
 
   app.use(express.json({ limit: '1mb' }));
+  app.use(requestLogMiddleware);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
